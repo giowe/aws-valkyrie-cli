@@ -1,0 +1,30 @@
+{
+  "name": "aws-valkyrie-cli",
+  "version": "0.0.0",
+  "description": "",
+  "author": "Giovanni Bruno",
+  "contributors": [
+    "Giovanni Bruno <giovanni.bruno@soluzionifutura.it>"
+  ],
+  "scripts": {
+    "test": "gulp invoke-local",
+    "postinstall": "gulp install"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/giowe/aws-valkyrie-cli.git"
+  },
+  "license": "ISC",
+  "main": "main.js",
+  "dependencies": {},
+  "devDependencies": {
+    "eslint": "^4.2.0",
+    "aws-cwlogs": "2.3.0",
+    "aws-sdk": "^2.85.0",
+    "inquirer": "^3.2.0",
+  },
+  "bugs": {
+    "url": "https://github.com/giowe/aws-valkyrie-cli/issues"
+  },
+  "homepage": "https://github.com/giowe/aws-valkyrie-cli#readme"
+}
