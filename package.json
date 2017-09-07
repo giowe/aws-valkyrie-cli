@@ -1,6 +1,6 @@
 {
   "name": "aws-valkyrie-cli",
-  "version": "0.0.0",
+  "version": "0.0.1",
   "description": "",
   "author": "Giovanni Bruno",
   "contributors": [
@@ -19,7 +19,8 @@
   "dependencies": {
     "aws-cwlogs": "2.3.0",
     "aws-sdk": "^2.85.0",
-    "inquirer": "^3.2.0"
+    "inquirer": "^3.2.0",
+    "require-dir": "^0.3.2"
   },
   "devDependencies": {
     "eslint": "^4.2.0"
