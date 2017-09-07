@@ -1,18 +1,19 @@
 'use strict';
 
-const argv = require('yargs').argv;
 const path = require('path');
-const logger = require('./logger');
+const argv = require('yargs').argv;
 const requireDir = require('require-dir');
+const request = require('request');
+const l = require('./logger');
 const pkg = require('./package.json');
 
 //todo check for update
 
 if ((argv.version || argv.v) && !argv._.length) {
-  logger.log(pkg.name, pkg.version);
+  l.log(pkg.name, pkg.version);
 } else {
   const commands = requireDir(path.join(__dirname, 'commands'));
   const command = commands[argv._[0]];
-  if (command) command.fn(logger, argv);
-  else logger.log('Command not found');
+  if (command) command.fn({ l, argv, commands });
+  else l.log('Command not found');
 }

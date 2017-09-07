@@ -58,15 +58,11 @@ function success(...args) {
   log(`[${colors.green}SUCCESS${colors.reset}]`, ...args);
 }
 
-function tabulate(columnWidth, args) {
-  log(...args.map(text => leftPad(text, columnWidth)));
-}
-
 module.exports = {
+  leftPad,
   log,
   fail,
   error,
   success,
-  tabulate,
   colors
 };
