@@ -1,6 +1,5 @@
 /* eslint-disable no-console */
 'use strict';
-
 const colors = {
   'reset': '\x1b[0m',
   'bright': '\x1b[1m',
@@ -30,6 +29,7 @@ const colors = {
     'crimson': '\x1b[48m'
   }
 };
+const prefix = `[${colors.yellow}VALK${colors.reset}]`;
 
 function leftPad(text, len, char = ' ', alignment = 'left') {
   text = text.toString();
@@ -41,9 +41,24 @@ function leftPad(text, len, char = ' ', alignment = 'left') {
   return text;
 }
 
+function repeat(text, len) {
+  let out = '';
+  for (let i = 0; i < len; i++) out += text;
+  return out;
+}
+
 function log(color, ...args) {
-  const prefix = `[${colors.yellow}VALK${colors.reset}]`;
   console.log(prefix, color, ...args, colors.reset);
+}
+
+function frame(text) {
+  const border = repeat('─', text.length + 2);
+  const padding = repeat(' ', 7);
+  log([
+    `┌${border}┐`,
+    `${padding}│ ${text} │`,
+    `${padding}└${border}┘`
+  ].join('\n'));
 }
 
 function fail(...args) {
@@ -59,6 +74,8 @@ function success(...args) {
 }
 
 module.exports = {
+  frame,
+  repeat,
   leftPad,
   log,
   fail,
