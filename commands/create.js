@@ -1,6 +1,8 @@
 'use strict';
 const inquirer = require('inquirer');
 const AWS = require('aws-sdk');
+
+const g = {};
 module.exports = {
   description: 'Create a new Valkyrie application',
   fn: ({ l, commands, args }) => {
@@ -9,38 +11,38 @@ module.exports = {
       { type: 'input', name: 'name', message: 'Project name:', validate: notNullValidator },
       { type: 'input', name: 'region', message: 'Region name:', validate: notNullValidator }
     ])
-      .then(({ name, region }) => {
-        const apigateway = new AWS.APIGateway({ region });
-        apigateway.createRestApi({
-          name,
+      .then(answers => {
+        Object.assign(g, answers);
+        g.apigateway = new AWS.APIGateway({ region: g.region });
+        return g.apigateway.createRestApi({
+          name: g.name,
           description: 'Valkyrie application'
-        }, (err, { id: restApiId }) => {
-          if (err) return l.error(err);
-          l.success(`${name} API (id: ${restApiId}) created in ${region};`);
-
-          apigateway.getResources({ restApiId }, (err, { items: [{ id: parentId }] }) => {
-            if (err) return l.error(err);
-            apigateway.createResource({
-              restApiId,
-              parentId,
-              pathPart: '{proxy+}'
-            }, (err, { id: resourceId }) => {
-              if (err) return l.error(err);
-              apigateway.putMethod({
-                authorizationType: 'NONE',
-                httpMethod: 'ANY',
-                resourceId,
-                restApiId,
-                apiKeyRequired: false,
-                operationName: 'Valkyrie proxy'
-              }, (err, data) => {
-                if (err) return l.error(err);
-                l.success(data);
-              });
-            });
-          });
-        });
+        }).promise();
       })
+      .then(data => {
+        g.restApiId = data.id;
+        l.success(`${g.name} API (id: ${g.restApiId}) created in ${g.region};`);
+        return g.apigateway.getResources({
+          restApiId: g.restApiId
+        }).promise();
+      })
+      .then(({ items: [{ id: parentId }] }) => {
+        return g.apigateway.createResource({
+          restApiId: g.restApiId,
+          parentId, pathPart: '{proxy+}'
+        }).promise();
+      })
+      .then(({ id: resourceId }) => {
+        return g.apigateway.putMethod({
+          authorizationType: 'NONE',
+          httpMethod: 'ANY',
+          resourceId,
+          restApiId: g.restApiId,
+          apiKeyRequired: false,
+          operationName: 'Valkyrie proxy'
+        }).promise();
+      })
+      .then(l.success)
       .catch(l.error);
   }
 };
