@@ -19,12 +19,10 @@ module.exports = {
           description: 'Valkyrie application'
         }).promise();
       })
-      .then(data => {
-        g.restApiId = data.id;
+      .then(({ id: restApiId }) => {
+        g.restApiId = restApiId;
         l.success(`${g.name} API (id: ${g.restApiId}) created in ${g.region};`);
-        return g.apigateway.getResources({
-          restApiId: g.restApiId
-        }).promise();
+        return g.apigateway.getResources({ restApiId }).promise();
       })
       .then(({ items: [{ id: parentId }] }) => {
         return g.apigateway.createResource({
@@ -33,6 +31,7 @@ module.exports = {
         }).promise();
       })
       .then(({ id: resourceId }) => {
+        g.resourceId = resourceId;
         return g.apigateway.putMethod({
           authorizationType: 'NONE',
           httpMethod: 'ANY',
@@ -42,7 +41,26 @@ module.exports = {
           operationName: 'Valkyrie proxy'
         }).promise();
       })
+      .then(() => {
+        return g.apigateway.putIntegration({
+          httpMethod: 'get',
+          resourceId: g.resourceId,
+          restApiId: g.restApiId,
+          type: 'AWS',
+          uri: 'arn:aws:lambda:eu-west-1:477398036046:function:aws-valkyrie-dev-lambda'
+        }).promise();
+      })
       .then(l.success)
-      .catch(l.error);
+      .catch(err => {
+        l.fail('Creation process failed;');
+        l.error(err);
+        if (g.restApiId) {
+          l.log('Reverting modifications...');
+          g.apigateway.deleteRestApi({ restApiId: g.restApiId }).promise()
+            .then(l.success(`${g.name} API (id: ${g.restApiId}) deleted;`))
+            .catch(l.error);
+        }
+      })
+      .then(l.succeed);
   }
 };
