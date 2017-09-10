@@ -9,14 +9,36 @@ module.exports = {
       { type: 'input', name: 'name', message: 'Project name:', validate: notNullValidator },
       { type: 'input', name: 'region', message: 'Region name:', validate: notNullValidator }
     ])
-      .then(results => {
-        const apigateway = new AWS.APIGateway({ region: results.region });
+      .then(({ name, region }) => {
+        const apigateway = new AWS.APIGateway({ region });
         apigateway.createRestApi({
-          name: results.name,
+          name,
           description: 'Valkyrie application'
-        }, (err, data) => {
+        }, (err, { id: restApiId }) => {
           if (err) return l.error(err);
-          l.success(data);
+          l.success(`${name} API (id: ${restApiId}) created in ${region};`);
+
+          apigateway.getResources({ restApiId }, (err, { items: [{ id: parentId }] }) => {
+            if (err) return l.error(err);
+            apigateway.createResource({
+              restApiId,
+              parentId,
+              pathPart: '{proxy+}'
+            }, (err, { id: resourceId }) => {
+              if (err) return l.error(err);
+              apigateway.putMethod({
+                authorizationType: 'NONE',
+                httpMethod: 'ANY',
+                resourceId,
+                restApiId,
+                apiKeyRequired: false,
+                operationName: 'Valkyrie proxy'
+              }, (err, data) => {
+                if (err) return l.error(err);
+                l.success(data);
+              });
+            });
+          });
         });
       })
       .catch(l.error);
