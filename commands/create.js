@@ -12,6 +12,8 @@ module.exports = {
       { type: 'input', name: 'region', message: 'Region name:', validate: notNullValidator, default: 'eu-west-1' },
     ])
       .then(answers => Object.assign(g, answers))
+
+      //POLICY CREATION
       .then(() => {
         g.iam = new AWS.IAM();
         return g.iam.createPolicy({
@@ -38,7 +40,10 @@ module.exports = {
         g.policyName = policyName;
         g.policyArn = policyArn;
         l.success(`${policyName} policy (arn: ${policyArn}) created;`);
+      })
 
+      //ROLE CREATION
+      .then(() => {
         return g.iam.createRole({
           AssumeRolePolicyDocument: JSON.stringify({
             Version: '2012-10-17',
@@ -54,10 +59,17 @@ module.exports = {
             ]
           }),
           RoleName: `valkyrie-${g.projectName}-lambda-role`,
-          Description: `Valkyrie "${g.projectName}" project role assigned to "valkyrie-${g.projectName}-lambda"`,
+          Description: `Valkyrie "${g.projectName}" project role assumed by "valkyrie-${g.projectName}-lambda"`,
           Path: '/valkyrie/'
         }).promise();
       })
+      .then(({ Role: { RoleName: roleName, Arn: roleArn } }) => {
+        g.roleName = roleName;
+        g.roleArn = roleArn;
+        l.success(`${roleName} role (arn: ${roleArn}) created`);
+      })
+
+      //API CREATION
       .then(() => {
         g.apigateway = new AWS.APIGateway({ region: g.region });
         return g.apigateway.createRestApi({
@@ -68,34 +80,38 @@ module.exports = {
       .then(({ id: restApiId }) => {
         g.restApiId = restApiId;
         l.success(`${g.projectName} API (id: ${g.restApiId}) created in ${g.region};`);
-        return g.apigateway.getResources({ restApiId }).promise();
       })
-      .then(({ items: [{ id: parentId }] }) => {
-        return g.apigateway.createResource({
-          restApiId: g.restApiId,
-          parentId, pathPart: '{proxy+}'
-        }).promise();
-      })
+
+      //RESOURCE CREATION
+      .then(() => g.apigateway.getResources({ restApiId: g.restApiId }).promise())
+      .then(({ items: [{ id: parentId }] }) => g.apigateway.createResource({
+        restApiId: g.restApiId,
+        parentId, pathPart: '{proxy+}'
+      }).promise())
       .then(({ id: resourceId }) => {
         g.resourceId = resourceId;
-        return g.apigateway.putMethod({
-          authorizationType: 'NONE',
-          httpMethod: 'ANY',
-          resourceId,
-          restApiId: g.restApiId,
-          apiKeyRequired: false,
-          operationName: 'Valkyrie proxy'
-        }).promise();
+        l.success(`{proxy+} resource (id: ${resourceId}) created`);
       })
-      .then(() => {
-        return g.apigateway.putIntegration({
-          httpMethod: 'ANY',
-          resourceId: g.resourceId,
-          restApiId: g.restApiId,
-          type: 'HTTP',
-          uri: 'arn:aws:lambda:eu-west-1:477398036046:function:aws-valkyrie-dev-lambda'
-        }).promise();
-      })
+
+      //METHOD CREATION
+      .then(() => g.apigateway.putMethod({
+        authorizationType: 'NONE',
+        httpMethod: 'ANY',
+        resourceId: g.resourceId,
+        restApiId: g.restApiId,
+        apiKeyRequired: false,
+        operationName: 'Valkyrie proxy'
+      }).promise())
+      .then(() => l.success('ANY method created'))
+
+      //ATTACHING LAMBDA
+      .then(() => g.apigateway.putIntegration({
+        httpMethod: 'POST',
+        resourceId: g.resourceId,
+        restApiId: g.restApiId,
+        type: 'HTTP',
+        uri: 'arn:aws:lambda:eu-west-1:477398036046:function:aws-valkyrie-dev-lambda'
+      }).promise())
       .then(resolve)
       .catch(err => {
         l.fail('Creation process failed;');
