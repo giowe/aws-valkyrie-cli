@@ -106,11 +106,12 @@ module.exports = {
 
       //ATTACHING LAMBDA
       .then(() => g.apigateway.putIntegration({
-        httpMethod: 'POST',
+        httpMethod: 'ANY',
+        integrationHttpMethod: 'POST',
         resourceId: g.resourceId,
         restApiId: g.restApiId,
         type: 'AWS',
-        uri: 'arn:aws:lambda:eu-west-1:477398036046:function:aws-valkyrie-dev-lambda'
+        uri: `arn:aws:apigateway:${g.region}:lambda:path/2015-03-31/functions/arn:aws:lambda:eu-west-1:477398036046:function:aws-valkyrie-dev-lambda`,
       }).promise())
       .then(resolve)
       .catch(err => {
