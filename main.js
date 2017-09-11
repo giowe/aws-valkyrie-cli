@@ -19,6 +19,6 @@ if ((argv.version || argv.v) && !argv._.length) {
 } else {
   const commands = requireDir(path.join(__dirname, 'commands'));
   const command = commands[argv._[0]];
-  if (command) command.fn({ l, argv, commands });
+  if (command) command.fn({ l, argv, commands }).catch(() => {});
   else l.log('Command not found');
 }

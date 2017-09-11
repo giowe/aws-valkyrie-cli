@@ -14,7 +14,7 @@ module.exports = {
       description: 'Updates just the AWS Lambda configuration part;'
     }
   ],
-  fn: ({ l, commands, args }) => {
+  fn: ({ l, commands, args }) => new Promise((resolve, reject) => {
 
-  }
+  })
 };
