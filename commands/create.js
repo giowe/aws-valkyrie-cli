@@ -109,7 +109,7 @@ module.exports = {
         httpMethod: 'POST',
         resourceId: g.resourceId,
         restApiId: g.restApiId,
-        type: 'HTTP',
+        type: 'AWS',
         uri: 'arn:aws:lambda:eu-west-1:477398036046:function:aws-valkyrie-dev-lambda'
       }).promise())
       .then(resolve)
