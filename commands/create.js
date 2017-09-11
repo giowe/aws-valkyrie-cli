@@ -30,7 +30,7 @@ module.exports = {
             ]
           }),
           PolicyName: `valkyrie-${g.projectName}-lambda-policy`,
-          Description: `Valkyrie "${g.projectName}" project policy associated to "valkyrie-${g.projectName}-lambda-role"`,
+          Description: `Valkyrie "${g.projectName}" project policy attached to "valkyrie-${g.projectName}-lambda-role"`,
           Path: '/valkyrie/'
         }).promise();
       })
@@ -38,6 +38,25 @@ module.exports = {
         g.policyName = policyName;
         g.policyArn = policyArn;
         l.success(`${policyName} policy (arn: ${policyArn}) created;`);
+
+        return g.iam.createRole({
+          AssumeRolePolicyDocument: JSON.stringify({
+            Version: '2012-10-17',
+            Statement: [
+              {
+                Sid: '1',
+                Effect: 'Allow',
+                Principal: {
+                  Service: 'lambda.amazonaws.com'
+                },
+                Action: 'sts:AssumeRole'
+              }
+            ]
+          }),
+          RoleName: `valkyrie-${g.projectName}-lambda-role`,
+          Description: `Valkyrie "${g.projectName}" project role assigned to "valkyrie-${g.projectName}-lambda"`,
+          Path: '/valkyrie/'
+        }).promise();
       })
       .then(() => {
         g.apigateway = new AWS.APIGateway({ region: g.region });
