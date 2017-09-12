@@ -78,6 +78,25 @@ module.exports = {
       })
       .then(() => l.success(`${g.policyName} attached to ${g.roleName}`))
 
+      //LAMBDA CREATION
+      /*.then(() => {
+        new AWS.Lambda({ region: g.region }).createFunction({
+          Code: {},
+          Description: "",
+          FunctionName: "MyFunction",
+          Handler: "souce_file.handler_name", // is of the form of the name of your source file and then name of your function handler
+          MemorySize: 128,
+          Publish: true,
+          Role: "arn:aws:iam::123456789012:role/service-role/role-name", // replace with the actual arn of the execution role you created
+          Runtime: "nodejs4.3",
+          Timeout: 15,
+          VpcConfig: {
+          }
+        }).promise();
+      })
+      .then((data) => l.success(data))
+      */
+
       //API CREATION
       .then(() => {
         g.apigateway = new AWS.APIGateway({ region: g.region });
