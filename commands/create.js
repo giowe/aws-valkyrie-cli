@@ -69,6 +69,15 @@ module.exports = {
         l.success(`${roleName} role (arn: ${roleArn}) created`);
       })
 
+      //ATTACHING POLICY
+      .then(() => {
+        g.iam.attachRolePolicy({
+          PolicyArn: g.policyArn,
+          RoleName: g.roleName
+        }).promise();
+      })
+      .then(() => l.success(`${g.policyName} attached to ${g.roleName}`))
+
       //API CREATION
       .then(() => {
         g.apigateway = new AWS.APIGateway({ region: g.region });

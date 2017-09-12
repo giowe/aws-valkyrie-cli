@@ -9,9 +9,9 @@ module.exports = {
       iam: new AWS.IAM()
     };
     const { region, projectName, restApiId, policyName, policyArn, roleName } = data;
-    g.iam.deletePolicy({
-      PolicyArn: policyArn
-    }).promise()
+    g.iam.detachRolePolicy({ PolicyArn: policyArn, RoleName: roleName }).promise()
+      .then(() => l.success(`${policyName} detached from ${roleName}`))
+      .then(() => g.iam.deletePolicy({ PolicyArn: policyArn }).promise())
       .then(() => l.success(`${policyName} policy deleted;`))
       .then(() => g.iam.deleteRole({ RoleName: roleName }).promise())
       .then(() => l.success(`${roleName} role deleted;`))
