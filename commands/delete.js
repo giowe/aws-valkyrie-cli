@@ -10,7 +10,7 @@ module.exports = {
     };
     const { region, projectName, restApiId, policyName, policyArn, roleName } = data;
     g.iam.detachRolePolicy({ PolicyArn: policyArn, RoleName: roleName }).promise()
-      .then(() => l.success(`${policyName} detached from ${roleName}`))
+      .then(() => l.success(`${policyName} detached from ${roleName};`))
       .then(() => g.iam.deletePolicy({ PolicyArn: policyArn }).promise())
       .then(() => l.success(`${policyName} policy deleted;`))
       .then(() => g.iam.deleteRole({ RoleName: roleName }).promise())

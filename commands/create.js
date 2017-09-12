@@ -72,7 +72,7 @@ module.exports = {
       .then(({ Role: { RoleName: roleName, Arn: roleArn } }) => {
         g.roleName = roleName;
         g.roleArn = roleArn;
-        l.success(`${roleName} role (arn: ${roleArn}) created`);
+        l.success(`${roleName} role (arn: ${roleArn}) created;`);
       })
 
       //ATTACHING POLICY
@@ -82,7 +82,7 @@ module.exports = {
           RoleName: g.roleName
         }).promise();
       })
-      .then(() => l.success(`${g.policyName} attached to ${g.roleName}`))
+      .then(() => l.success(`${g.policyName} attached to ${g.roleName};`))
 
       //LAMBDA CREATION
       /*.then(() => {
@@ -124,7 +124,7 @@ module.exports = {
       }).promise())
       .then(({ id: resourceId }) => {
         g.resourceId = resourceId;
-        l.success(`{proxy+} resource (id: ${resourceId}) created`);
+        l.success(`{proxy+} resource (id: ${resourceId}) created;`);
       })
 
       //METHOD CREATION
@@ -136,7 +136,7 @@ module.exports = {
         apiKeyRequired: false,
         operationName: 'Valkyrie proxy'
       }).promise())
-      .then(() => l.success('ANY method created'))
+      .then(() => l.success('ANY method created;'))
 
       //ATTACHING LAMBDA
       .then(() => g.apigateway.putIntegration({
@@ -145,7 +145,7 @@ module.exports = {
         resourceId: g.resourceId,
         restApiId: g.restApiId,
         type: 'AWS',
-        uri: `arn:aws:apigateway:${g.region}:lambda:path/2015-03-31/functions/arn:aws:lambda:eu-west-1:477398036046:function:aws-valkyrie-dev-lambda`,
+        uri: `arn:aws:apigateway:${g.region}:lambda:path/2015-03-31/functions/arn:aws:lambda:eu-west-1:477398036046:function:aws-valkyrie-dev-lambda`
       }).promise())
       .then(resolve)
       .catch(err => {
