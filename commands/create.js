@@ -3,11 +3,13 @@ const inquirer = require('inquirer');
 const AWS = require('aws-sdk');
 const { promisify } = require('util');
 const exec = promisify(require('child_process').exec);
-
-exec('npm root -g')
+const path = require('path');
+const  = require.resolve('valkyrie-scaffolder-default');
+/*exec('npm root -g')
   .then(({ stdout }) => {
-});
 
+  });
+*/
 module.exports = {
   description: 'Create a new Valkyrie application',
   fn: ({ l, commands, args }) => new Promise((resolve, reject) => {
@@ -16,6 +18,9 @@ module.exports = {
     inquirer.prompt([
       { type: 'input', name: 'projectName', message: 'Project name:', validate: notNullValidator, default: 'test' },
       { type: 'input', name: 'region', message: 'Region name:', validate: notNullValidator, default: 'eu-west-1' },
+      { type: 'input', name: 'projectDescription', message: 'Description:'},
+      { type: 'input', name: 'author', message: 'Author:'},
+      { type: 'input', name: 'license', message: 'License:'},
     ])
       .then(answers => Object.assign(g, answers))
 
