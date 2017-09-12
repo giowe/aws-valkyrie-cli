@@ -1,6 +1,12 @@
 'use strict';
 const inquirer = require('inquirer');
 const AWS = require('aws-sdk');
+const { promisify } = require('util');
+const exec = promisify(require('child_process').exec);
+
+exec('npm root -g')
+  .then(({ stdout }) => {
+});
 
 module.exports = {
   description: 'Create a new Valkyrie application',
