@@ -4,6 +4,7 @@ const AWS = require('aws-sdk');
 const { promisify } = require('util');
 const exec = promisify(require('child_process').exec);
 const path = require('path');
+
 /*exec('npm root -g')
   .then(({ stdout }) => {
 
@@ -17,15 +18,14 @@ module.exports = {
     inquirer.prompt([
       { type: 'input', name: 'projectName', message: 'Project name:', validate: notNullValidator, default: 'test' },
       { type: 'input', name: 'region', message: 'Region name:', validate: notNullValidator, default: 'eu-west-1' },
-      /*{ type: 'input', name: 'projectDescription', message: 'Description:'},
-      { type: 'input', name: 'author', message: 'Author:'},
-      { type: 'input', name: 'license', message: 'License:'},*/
+      ...require('valkyrie-scaffolder-default')
     ])
       .then(answers => Object.assign(g, answers))
 
       .then(() => {
-        const scaffoldPath = require.resolve('valkyrie-scaffolder-default');
 
+        const scaffoldPath = require.resolve('valkyrie-scaffolder-default');
+        throw new Error('ciao');
       })
 
       //POLICY CREATION
