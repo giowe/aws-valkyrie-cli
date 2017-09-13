@@ -18,8 +18,8 @@ module.exports = {
     const g = {};
     const notNullValidator = (val) => val !== '';
     inquirer.prompt([
-      { type: 'input', name: 'projectName', message: 'Project name:', validate: notNullValidator, default: 'test' },
-      { type: 'input', name: 'region', message: 'Region name:', validate: notNullValidator, default: 'eu-west-1' },
+      { type: 'input', name: 'projectName', message: 'project name:', validate: notNullValidator, default: 'test' },
+      { type: 'input', name: 'region', message: 'region name:', validate: notNullValidator, default: 'eu-west-1' },
       ...require('valkyrie-scaffolder-default').inputs
     ])
       .then(answers => Object.assign(g, answers))
