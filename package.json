@@ -19,6 +19,7 @@
   "dependencies": {
     "aws-cwlogs": "^2.3.0",
     "aws-sdk": "^2.112.0",
+    "gulp": "^3.9.1",
     "inquirer": "^3.2.0",
     "request": "^2.81.0",
     "require-dir": "^0.3.2",
