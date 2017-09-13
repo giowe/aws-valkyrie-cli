@@ -10,6 +10,8 @@ const path = require('path');
 
   });
 */
+
+
 module.exports = {
   description: 'Create a new Valkyrie application',
   fn: ({ l, commands, args }) => new Promise((resolve, reject) => {
@@ -18,7 +20,7 @@ module.exports = {
     inquirer.prompt([
       { type: 'input', name: 'projectName', message: 'Project name:', validate: notNullValidator, default: 'test' },
       { type: 'input', name: 'region', message: 'Region name:', validate: notNullValidator, default: 'eu-west-1' },
-      ...require('valkyrie-scaffolder-default')
+      ...require('valkyrie-scaffolder-default').inputs
     ])
       .then(answers => Object.assign(g, answers))
 
