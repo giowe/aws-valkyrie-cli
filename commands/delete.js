@@ -8,7 +8,7 @@ module.exports = {
     const g = {
       iam: new AWS.IAM()
     };
-    const { region, projectName, restApiId, policyName, policyArn, roleName } = data;
+    const { template: { region, projectName }, restApiId, policyName, policyArn, roleName } = data;
     g.iam.detachRolePolicy({ PolicyArn: policyArn, RoleName: roleName }).promise()
       .then(() => l.success(`${policyName} detached from ${roleName};`))
       .then(() => g.iam.deletePolicy({ PolicyArn: policyArn }).promise())
@@ -17,6 +17,7 @@ module.exports = {
       .then(() => l.success(`${roleName} role deleted;`))
       .then(() => new AWS.APIGateway({ region }).deleteRestApi({ restApiId }).promise())
       .then(() => l.success(`${projectName} API deleted;`))
+      //todo do I want to delete folder too?
       .then(resolve)
       .catch((err) => {
         l.error(err);

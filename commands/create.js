@@ -4,31 +4,85 @@ const AWS = require('aws-sdk');
 const { promisify } = require('util');
 const exec = promisify(require('child_process').exec);
 const path = require('path');
-
-/*exec('npm root -g')
-  .then(({ stdout }) => {
-
-  });
-*/
-
+const fs = require('fs');
+const { listFiles, subPath } = require('../utils');
+const cwd = process.cwd();
 
 module.exports = {
   description: 'Create a new Valkyrie application',
   fn: ({ l, commands, args }) => new Promise((resolve, reject) => {
     const g = {};
     const notNullValidator = (val) => val !== '';
-    inquirer.prompt([
-      { type: 'input', name: 'projectName', message: 'project name:', validate: notNullValidator, default: 'test' },
-      { type: 'input', name: 'region', message: 'region name:', validate: notNullValidator, default: 'eu-west-1' },
-      ...require('valkyrie-scaffolder-default').inputs
-    ])
-      .then(answers => Object.assign(g, answers))
+    const templatesPrefix = 'valkyrie-scaffolder-';
+    const defaultTemplatePath = path.join(__dirname, '..', 'node_modules', 'valkyrie-scaffolder-default');
+    const defaultTemplateListName = `default (${require(path.join(defaultTemplatePath, 'package.json')).version})`;
 
-      .then(() => {
-
-        const scaffoldPath = require.resolve('valkyrie-scaffolder-default');
-        throw new Error('ciao');
+    //SCAFFOLDER SELECTION
+    exec('npm root -g')
+      .then(({ stdout }) => {
+        g.npmGlobalPath = stdout.replace('\n', '');
+        g.scaffolders = { [defaultTemplateListName] : {
+          name: 'valkyrie-scaffolder-default',
+          path: defaultTemplatePath
+        } };
+        return inquirer.prompt({
+          type: 'list', name: 'scaffolder', message: 'select a template to scaffold you project:', choices: [
+            defaultTemplateListName,
+            ...fs.readdirSync(g.npmGlobalPath).reduce((acc, module)=> {
+              if (module.substr(0, templatesPrefix.length) === templatesPrefix) {
+                const templatePath = path.join(g.npmGlobalPath, module);
+                const templateListName = `${module.substr(templatesPrefix.length, module.length)} (${require(path.join(templatePath, 'package.json')).version})`;
+                g.scaffolders[templateListName] = {
+                  name: module,
+                  path: templatePath
+                };
+                acc.push(templateListName);
+              }
+              return acc;
+            }, [])
+          ]
+        });
       })
+
+      //TEMPLATE VARIABLES INPUT
+      .then(({ scaffolder }) => {
+        g.scaffolderPath = g.scaffolders[scaffolder].path;
+        const defaultInputs = [
+          { type: 'input', name: 'projectName', message: 'project name:', validate: notNullValidator, default: 'test' },
+          { type: 'input', name: 'region', message: 'region name:', validate: notNullValidator, default: 'eu-west-1' },
+        ];
+        const { inputs: scaffolderInputs, source } = require(g.scaffolderPath);
+        g.scaffolderSourcePath = path.join(g.scaffolderPath, source);
+        const l = defaultInputs.length;
+        return inquirer.prompt([
+          ...defaultInputs,
+          ...scaffolderInputs.filter(({ name }) => {
+            for (let i = 0; i < l; i++) if (defaultInputs[i].name === name) return false;
+            return true;
+          })
+        ]);
+      })
+
+      .then(answers => g.template = answers)
+
+      //TEMPLATING AND SCAFFOLDING APPLICATION
+      .then(() => {
+        g.projectFolder = path.join(cwd, g.template.projectName);
+        fs.mkdirSync(g.projectFolder);
+        return listFiles(g.scaffolderSourcePath,
+          (filePath, content) => {
+            let fileName = filePath.replace(g.scaffolderSourcePath, '');
+            fileName = fileName.replace('npmignore', 'gitignore');
+            Object.entries(g.template).forEach(([key, value]) => {
+              const re = new RegExp(`{{${key}}}`, 'g');
+              content = content.replace(re, value);
+            });
+            fs.writeFileSync(path.join(g.projectFolder, fileName), content);
+          },
+          dirPath => fs.mkdirSync(path.join(path.join(cwd, subPath(dirPath, g.templateName))))
+        );
+      })
+      .then(() => l.success(`project scaffolded in ${g.projectFolder}`))
 
       //POLICY CREATION
       .then(() => {
@@ -48,8 +102,8 @@ module.exports = {
               }
             ]
           }),
-          PolicyName: `valkyrie-${g.projectName}-lambda-policy`,
-          Description: `Valkyrie "${g.projectName}" project policy attached to "valkyrie-${g.projectName}-lambda-role"`,
+          PolicyName: `valkyrie-${g.template.projectName}-lambda-policy`,
+          Description: `Valkyrie "${g.template.projectName}" project policy attached to "valkyrie-${g.template.projectName}-lambda-role"`,
           Path: '/valkyrie/'
         }).promise();
       })
@@ -75,8 +129,8 @@ module.exports = {
               }
             ]
           }),
-          RoleName: `valkyrie-${g.projectName}-lambda-role`,
-          Description: `Valkyrie "${g.projectName}" project role assumed by "valkyrie-${g.projectName}-lambda"`,
+          RoleName: `valkyrie-${g.template.projectName}-lambda-role`,
+          Description: `Valkyrie "${g.template.projectName}" project role assumed by "valkyrie-${g.template.projectName}-lambda"`,
           Path: '/valkyrie/'
         }).promise();
       })
@@ -95,9 +149,11 @@ module.exports = {
       })
       .then(() => l.success(`${g.policyName} attached to ${g.roleName};`))
 
+      //todo VALKCONFIG CREATION
+
       //LAMBDA CREATION
       /*.then(() => {
-        new AWS.Lambda({ region: g.region }).createFunction({
+        new AWS.Lambda({ region: g.template.region }).createFunction({
           Code: {},
           Description: "",
           FunctionName: "MyFunction",
@@ -116,15 +172,15 @@ module.exports = {
 
       //API CREATION
       .then(() => {
-        g.apigateway = new AWS.APIGateway({ region: g.region });
+        g.apigateway = new AWS.APIGateway({ region: g.template.region });
         return g.apigateway.createRestApi({
-          name: g.projectName,
+          name: g.template.projectName,
           description: 'Valkyrie application'
         }).promise();
       })
       .then(({ id: restApiId }) => {
         g.restApiId = restApiId;
-        l.success(`${g.projectName} API (id: ${g.restApiId}) created in ${g.region};`);
+        l.success(`${g.template.projectName} API (id: ${g.restApiId}) created in ${g.template.region};`);
       })
 
       //RESOURCE CREATION
@@ -155,15 +211,15 @@ module.exports = {
         integrationHttpMethod: 'POST',
         resourceId: g.resourceId,
         restApiId: g.restApiId,
-        type: 'AWS',
-        uri: `arn:aws:apigateway:${g.region}:lambda:path/2015-03-31/functions/arn:aws:lambda:eu-west-1:477398036046:function:aws-valkyrie-dev-lambda`
+        type: 'AWS_PROXY',
+        uri: `arn:aws:apigateway:${g.template.region}:lambda:path/2015-03-31/functions/arn:aws:lambda:eu-west-1:477398036046:function:aws-valkyrie-dev-lambda/invocations`
       }).promise())
       .then(resolve)
       .catch(err => {
-        l.fail('Creation process failed;');
+        l.fail('creation process failed;');
         l.error(err);
         if (g.restApiId) {
-          l.log('Reverting modifications...');
+          l.log('reverting modifications...');
           commands.delete.fn({ l, commands, args }, g)
             .then(() => reject(err))
             .catch(reject);
