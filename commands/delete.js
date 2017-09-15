@@ -1,41 +1,43 @@
 'use strict';
 
 const AWS = require('aws-sdk');
-const fs = require('fs');
-const path = require('path');
+const { getProjectInfo, breakChain } = require('../utils');
+const inquirer = require('inquirer');
 
 module.exports = {
   description: 'Delete an existing Valkyrie application',
-  fn: ({ l, commands, args }, valkconfig) => new Promise((resolve, reject) => {
-    if (!valkconfig) {
-      try {
-        valkconfig = fs.readFileSync(path.join(process.cwd(), '.valkconfig'));
-      } catch(err) {
-        l.error('can\'t find .valkconfg in current working directory'); //todo use liftoff to get this file, maybe i need this from main fn arg
-      }
-      valkconfig = JSON.parse(valkconfig);
-    }
-    const g = {
-      iam: new AWS.IAM()
-    };
+  fn: ({ l, commands, args }, valkconfig = null) => new Promise((resolve, reject) => {
+    const programmaticDeletion = valkconfig !== null;
+    if (!valkconfig) valkconfig = getProjectInfo().valkconfig;
+    const vars = { iam: new AWS.IAM() };
     const region = valkconfig.Project.Region;
     const PolicyArn = valkconfig.Iam.PolicyArn;
     const RoleName = valkconfig.Iam.RoleName;
     const restApiId = valkconfig.Api.Id;
 
-    g.iam.detachRolePolicy({ PolicyArn, RoleName }).promise()
+    (() => {
+      if (!programmaticDeletion) {
+        return inquirer.prompt([{ type: 'confirm', name: 'confirm', message: 'All aws infrastructure related to this project will be deleted and it will be impossible to restore it, including roles and policies. Continue?', default: false}]).then(({confirm}) => {
+          if (!confirm) {
+            l.log('process aborted;');
+            breakChain();
+          }
+        });
+      }
+      else return Promise.resolve();
+    })()
+      .then(() => vars.iam.detachRolePolicy({ PolicyArn, RoleName }).promise())
       .then(() => l.success(`${PolicyArn} detached from ${RoleName};`))
-      .then(() => g.iam.deletePolicy({ PolicyArn }).promise())
+      .then(() => vars.iam.deletePolicy({ PolicyArn }).promise())
       .then(() => l.success(`${PolicyArn} policy deleted;`))
-      .then(() => g.iam.deleteRole({ RoleName }).promise())
+      .then(() => vars.iam.deleteRole({ RoleName }).promise())
       .then(() => l.success(`${RoleName} role deleted;`))
       .then(() => new AWS.APIGateway({ region }).deleteRestApi({ restApiId }).promise())
       .then(() => l.success(`${restApiId} API deleted;`))
-      //todo do I want to delete folder too?
       .then(resolve)
-      .catch((err) => {
-        l.error(err);
-        reject(err);
+      .catch(err => {
+        if (err.chainBraker) resolve();
+        else reject(err);
       });
   })
 };

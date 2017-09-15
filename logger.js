@@ -1,5 +1,7 @@
 /* eslint-disable no-console */
 'use strict';
+
+const { argv } = require('yargs');
 const colors = {
   'reset': '\x1b[0m',
   'bright': '\x1b[1m',
@@ -66,7 +68,7 @@ function fail(...args) {
 }
 
 function error(err) {
-  log(`[${colors.red}ERROR${colors.reset}]`, `\n${err.stack}`);
+  log(`[${colors.red}ERROR${colors.reset}]`, argv.debug ? `\n${err.stack}` : err.name);
 }
 
 function success(...args) {

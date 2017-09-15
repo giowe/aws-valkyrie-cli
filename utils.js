@@ -17,3 +17,30 @@ e.listFiles = (rootPath, onFile, onFolder) => new Promise((resolve) => {
 });
 
 e.subPath = (fullPath, fromString) => fullPath.substr(fullPath.indexOf(fromString) + 1 + fromString.length, fullPath.length);
+
+e.getProjectInfo = () => {
+  const cwd = process.cwd().split('/');
+  const l = cwd.length;
+  for (let i = 0; i < l; i++) {
+    try {
+      const root = path.resolve('/', path.join(...cwd));
+      return {
+        root,
+        valkconfig: require(path.join(root, 'valkconfig.json')),
+        pkg: require(path.join(root, 'package.json'))
+      };
+    } catch(ignore) {
+      cwd.pop();
+    }
+  }
+
+  const e = new Error();
+  e.name = 'not a Valkyrie project (or any of the parent directories): missing valkconfig.json';
+  throw e;
+};
+
+e.breakChain = (data) => {
+  const e = new Error(data);
+  e.chainBraker = true;
+  throw e;
+};

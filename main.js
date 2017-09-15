@@ -1,7 +1,7 @@
 'use strict';
 
 const path = require('path');
-const argv = require('yargs').argv;
+const { argv } = require('yargs');
 const requireDir = require('require-dir');
 const request = require('request');
 const l = require('./logger');
@@ -19,6 +19,6 @@ if ((argv.version || argv.v) && !argv._.length) {
 } else {
   const commands = requireDir(path.join(__dirname, 'commands'));
   const command = commands[argv._[0]];
-  if (command) command.fn({ l, argv, commands }).catch(() => {});
+  if (command) command.fn({ l, argv, commands }).catch((...errors) => errors.forEach(l.error));
   else l.log('Command not found');
 }

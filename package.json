@@ -18,12 +18,12 @@
   "main": "main.js",
   "dependencies": {
     "aws-cwlogs": "^2.3.0",
-    "aws-sdk": "^2.115.0",
+    "aws-sdk": "^2.116.0",
     "gulp": "^3.9.1",
     "inquirer": "^3.2.3",
     "request": "^2.81.0",
     "require-dir": "^0.3.2",
-    "valkyrie-scaffolder-default": "^0.0.9"
+    "valkyrie-scaffolder-default": "^0.0.10"
   },
   "devDependencies": {
     "eslint": "^4.6.1"

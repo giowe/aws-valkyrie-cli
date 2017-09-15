@@ -12,6 +12,7 @@ module.exports = {
   description: 'Create a new Valkyrie application',
   fn: ({ l, commands, args }) => new Promise((resolve, reject) => {
     const vars = { };
+    //todo check if valkconf is not already available
     const valkconfig = {
       Project: {},
       Iam: {},
@@ -22,7 +23,7 @@ module.exports = {
     const templatesPrefix = 'valkyrie-scaffolder-';
     const defaultTemplatePath = path.join(__dirname, '..', 'node_modules', 'valkyrie-scaffolder-default');
     const defaultTemplateListName = `default (${require(path.join(defaultTemplatePath, 'package.json')).version})`;
-
+    const saveValkconfig = () => fs.writeFileSync(path.join(vars.projectFolder, 'valkconfig.json'), JSON.stringify(valkconfig, null, 2));
     //SCAFFOLDER SELECTION
     exec('npm root -g')
       .then(({ stdout }) => {
@@ -131,6 +132,7 @@ module.exports = {
       .then(({ Policy: { PolicyName: policyName, Arn: policyArn } }) => {
         valkconfig.Iam.PolicyArn = policyArn;
         vars.policyName = policyName;
+        saveValkconfig();
         l.success(`${policyName} policy (arn: ${policyArn}) created;`);
       })
 
@@ -158,6 +160,7 @@ module.exports = {
       .then(({ Role: { RoleName: roleName, Arn: roleArn } }) => {
         valkconfig.Iam.RoleName = roleName;
         valkconfig.Lambda.Role = roleArn;
+        saveValkconfig();
         l.success(`${roleName} role (arn: ${roleArn}) created;`);
       })
 
@@ -171,8 +174,8 @@ module.exports = {
       .then(() => l.success(`${vars.policyName} attached to ${valkconfig.Iam.RoleName};`))
 
       //LAMBDA CREATION
-      .then(() => new AWS.Lambda({ region: valkconfig.Project.Region }).createFunction(Object.assign(valkconfig.lambda, { Code: { ZipFile: new Buffer() } }).promise()))
-      .then((data) => l.success(data))
+      //.then(() => new AWS.Lambda({ region: valkconfig.Project.Region }).createFunction(Object.assign(valkconfig.lambda, { Code: { ZipFile: new Buffer() } }).promise()))
+      //.then((data) => l.success(data))
 
       //API CREATION
       .then(() => {
@@ -184,6 +187,7 @@ module.exports = {
       })
       .then(({ id: restApiId }) => {
         valkconfig.Api.Id = restApiId;
+        saveValkconfig();
         l.success(`${vars.template.projectName} API (id: ${restApiId}) created in ${valkconfig.Project.Region};`);
       })
 
@@ -195,6 +199,7 @@ module.exports = {
       }).promise())
       .then(({ id: resourceId }) => {
         vars.resourceId = resourceId;
+        throw new Error('errore test');
         l.success(`{proxy+} resource (id: ${resourceId}) created;`);
       })
 
@@ -218,18 +223,22 @@ module.exports = {
         type: 'AWS_PROXY',
         uri: `arn:aws:apigateway:${valkconfig.Project.Region}:lambda:path/2015-03-31/functions/arn:aws:lambda:eu-west-1:477398036046:function:aws-valkyrie-dev-lambda/invocations`
       }).promise())
+      .then(() => {
+        saveValkconfig();
+        l.success(`Valkyrie ${vars.template.projectName} project successfully created:\n${JSON.stringify(valkconfig, null, 2)}`)
+      })
       .then(resolve)
       .catch(err => {
         l.fail('creation process failed;');
         l.error(err);
         if (valkconfig.Api.Id) {
           l.log('reverting modifications...');
-          commands.delete.fn({ l, commands, args }, valkconfig)
-            .then(() => reject(err))
-            .catch(reject);
+          return commands.delete.fn({ l, commands, args }, valkconfig);
         } else {
-          reject(err);
+          reject();
         }
-      });
+      })
+      .then(resolve)
+      .catch(reject);
   })
 };
