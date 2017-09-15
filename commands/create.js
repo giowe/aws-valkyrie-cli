@@ -199,7 +199,6 @@ module.exports = {
       }).promise())
       .then(({ id: resourceId }) => {
         vars.resourceId = resourceId;
-        throw new Error('errore test');
         l.success(`{proxy+} resource (id: ${resourceId}) created;`);
       })
 
@@ -230,13 +229,12 @@ module.exports = {
       .then(resolve)
       .catch(err => {
         l.fail('creation process failed;');
-        l.error(err);
         if (valkconfig.Api.Id) {
+          l.error(err);
           l.log('reverting modifications...');
           return commands.delete.fn({ l, commands, args }, valkconfig);
-        } else {
-          reject();
         }
+        return reject(err);
       })
       .then(resolve)
       .catch(reject);
