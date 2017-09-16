@@ -1,6 +1,7 @@
 'use strict';
 const inquirer = require('inquirer');
 const AWS = require('aws-sdk');
+const del = require('del');
 const { promisify } = require('util');
 const exec = promisify(require('child_process').exec);
 const path = require('path');
@@ -104,7 +105,17 @@ module.exports = {
           dirPath => fs.mkdirSync(path.join(path.join(cwd, subPath(dirPath, vars.templateName))))
         );
       })
-      .then(() => l.success(`project scaffolded in ${vars.projectFolder}`))
+      .then(() => {
+        l.success(`project scaffolded in ${vars.projectFolder}`);
+        l.log('installing npm packages...');
+      })
+
+      //INSTALLING PACKAGES
+      .then(() => exec(`npm install --prefix ${vars.projectFolder}`))
+      .then(() => {
+        del.sync(path.join(vars.projectFolder, 'etc'), { force: true });
+        l.success('project packages installed');
+      })
 
       //POLICY CREATION
       .then(() => {
@@ -179,9 +190,10 @@ module.exports = {
 
       //API CREATION
       .then(() => {
+        vars.apiName = `valkyrie-${vars.template.projectName}-api`;
         vars.apigateway = new AWS.APIGateway({ region: valkconfig.Project.Region });
         return vars.apigateway.createRestApi({
-          name: vars.template.projectName,
+          name: vars.apiName,
           description: 'Valkyrie application'
         }).promise();
       })
@@ -222,11 +234,31 @@ module.exports = {
         type: 'AWS_PROXY',
         uri: `arn:aws:apigateway:${valkconfig.Project.Region}:lambda:path/2015-03-31/functions/arn:aws:lambda:eu-west-1:477398036046:function:aws-valkyrie-dev-lambda/invocations`
       }).promise())
+      .then(() => l.success(`${valkconfig.Lambda.FunctionName} attached to ${vars.apiName}`))
+
+      //RESPONSE INTEGRATION
+      .then(() => vars.apigateway.putIntegrationResponse({
+        httpMethod: 'ANY',
+        resourceId: vars.resourceId,
+        restApiId: valkconfig.Api.Id,
+        statusCode: '200',
+        responseTemplates: { 'application/json': '{}' }
+      }).promise())
+      .then(() => l.success('response integrated;'))
+
+      //DEPLOYMENT CREATION
+      .then(() => vars.apigateway.createDeployment({
+        restApiId: valkconfig.Api.Id,
+        stageName: 'staging'
+      }).promise())
+      .then(() => l.success('staging deployiment created.'))
+
       .then(() => {
         saveValkconfig();
         l.success(`Valkyrie ${vars.template.projectName} project successfully created:\n${JSON.stringify(valkconfig, null, 2)}`)
+        l.log(`${vars.apiName} is available at: ${l.colors.cyan}https://${valkconfig.Api.Id}.execute-api.eu-west-1.amazonaws.com/staging${l.colors.reset}`);
+        resolve();
       })
-      .then(resolve)
       .catch(err => {
         l.fail('creation process failed;');
         if (valkconfig.Api.Id) {
