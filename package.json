@@ -24,7 +24,8 @@
     "inquirer": "^3.2.3",
     "request": "^2.81.0",
     "require-dir": "^0.3.2",
-    "valkyrie-scaffolder-default": "^0.0.10"
+    "valkyrie-scaffolder-default": "^0.0.10",
+    "zip-dir": "^1.0.2"
   },
   "devDependencies": {
     "eslint": "^4.6.1"

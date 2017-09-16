@@ -68,7 +68,7 @@ function fail(...args) {
 }
 
 function error(err) {
-  log(`[${colors.red}ERROR${colors.reset}]`, argv.debug ? `\n${err.stack}` : err.name);
+  log(`[${colors.red}ERROR${colors.reset}]`, argv.debug ? `\n${err.stack}` : err.message);
 }
 
 function success(...args) {

@@ -4,6 +4,7 @@ const AWS = require('aws-sdk');
 const del = require('del');
 const { promisify } = require('util');
 const exec = promisify(require('child_process').exec);
+const zipdir = promisify(require('zip-dir'));
 const path = require('path');
 const fs = require('fs');
 const { listFiles, subPath } = require('../utils');
@@ -11,7 +12,7 @@ const cwd = process.cwd();
 
 module.exports = {
   description: 'Create a new Valkyrie application',
-  fn: ({ l, commands, args }) => new Promise((resolve, reject) => {
+  fn: ({ l, argv, commands }) => new Promise((resolve, reject) => {
     const vars = { };
     //todo check if valkconf is not already available
     const valkconfig = {
@@ -154,7 +155,6 @@ module.exports = {
             Version: '2012-10-17',
             Statement: [
               {
-                Sid: '1',
                 Effect: 'Allow',
                 Principal: {
                   Service: 'lambda.amazonaws.com'
@@ -185,8 +185,9 @@ module.exports = {
       .then(() => l.success(`${vars.policyName} attached to ${valkconfig.Iam.RoleName};`))
 
       //LAMBDA CREATION
-      //.then(() => new AWS.Lambda({ region: valkconfig.Project.Region }).createFunction(Object.assign(valkconfig.lambda, { Code: { ZipFile: new Buffer() } }).promise()))
-      //.then((data) => l.success(data))
+      .then(() => zipdir(vars.projectFolder))
+      .then(buffer => new AWS.Lambda({ region: valkconfig.Project.Region }).createFunction(Object.assign(valkconfig.Lambda, { Code: { ZipFile: buffer } })).promise())
+      .then((data) => l.success(data))
 
       //API CREATION
       .then(() => {
@@ -255,18 +256,17 @@ module.exports = {
 
       .then(() => {
         saveValkconfig();
-        l.success(`Valkyrie ${vars.template.projectName} project successfully created:\n${JSON.stringify(valkconfig, null, 2)}`)
+        l.success(`Valkyrie ${vars.template.projectName} project successfully created:\n${JSON.stringify(valkconfig, null, 2)}`);
         l.log(`${vars.apiName} is available at: ${l.colors.cyan}https://${valkconfig.Api.Id}.execute-api.eu-west-1.amazonaws.com/staging${l.colors.reset}`);
         resolve();
       })
       .catch(err => {
         l.fail('creation process failed;');
-        if (valkconfig.Api.Id) {
-          l.error(err);
+        l.error(err);
+        if (!argv['no-revert']) {
           l.log('reverting modifications...');
           return commands.delete.fn({ l, commands, args }, valkconfig);
         }
-        return reject(err);
       })
       .then(resolve)
       .catch(reject);
