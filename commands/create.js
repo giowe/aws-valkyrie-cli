@@ -186,7 +186,9 @@ module.exports = {
 
       //LAMBDA CREATION
       .then(() => zipdir(vars.projectFolder))
-      .then(buffer => new AWS.Lambda({ region: valkconfig.Project.Region }).createFunction(Object.assign(valkconfig.Lambda, { Code: { ZipFile: buffer } })).promise())
+      .then(buffer => {
+        return new AWS.Lambda({ region: valkconfig.Project.Region }).createFunction(Object.assign(valkconfig.Lambda, { Code: { ZipFile: buffer } })).promise()
+      })
       .then((data) => l.success(data))
 
       //API CREATION
@@ -265,7 +267,7 @@ module.exports = {
         l.error(err);
         if (!argv['no-revert']) {
           l.log('reverting modifications...');
-          return commands.delete.fn({ l, commands, args }, valkconfig);
+          return commands.delete.fn({ l, argv, commands }, valkconfig);
         }
       })
       .then(resolve)
