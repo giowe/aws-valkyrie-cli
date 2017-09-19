@@ -34,9 +34,7 @@ e.getProjectInfo = () => {
     }
   }
 
-  const e = new Error();
-  e.name = 'not a Valkyrie project (or any of the parent directories): missing valkconfig.json';
-  throw e;
+  throw new Error('not a Valkyrie project (or any of the parent directories): missing valkconfig.json');
 };
 
 e.breakChain = (data) => {

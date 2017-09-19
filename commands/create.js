@@ -185,11 +185,13 @@ module.exports = {
       .then(() => l.success(`${vars.policyName} attached to ${valkconfig.Iam.RoleName};`))
 
       //LAMBDA CREATION
-      .then(() => zipdir(vars.projectFolder))
+      /*.then(() => zipdir(vars.projectFolder))
       .then(buffer => {
-        return new AWS.Lambda({ region: valkconfig.Project.Region }).createFunction(Object.assign(valkconfig.Lambda, { Code: { ZipFile: buffer } })).promise()
+        const data = Object.assign(valkconfig.Lambda, { Code: { ZipFile: buffer } });
+        l.log(data);
+        return new AWS.Lambda({ region: valkconfig.Project.Region }).createFunction(data).promise();
       })
-      .then((data) => l.success(data))
+      .then((data) => l.success(data))*/
 
       //API CREATION
       .then(() => {
@@ -223,6 +225,7 @@ module.exports = {
         httpMethod: 'ANY',
         resourceId: vars.resourceId,
         restApiId: valkconfig.Api.Id,
+        requestParameters: { 'method.request.path.proxy': true },
         apiKeyRequired: false,
         operationName: 'Valkyrie proxy'
       }).promise())
@@ -231,10 +234,14 @@ module.exports = {
       //ATTACHING LAMBDA
       .then(() => vars.apigateway.putIntegration({
         httpMethod: 'ANY',
-        integrationHttpMethod: 'POST',
         resourceId: vars.resourceId,
         restApiId: valkconfig.Api.Id,
         type: 'AWS_PROXY',
+        cacheKeyParameters: ['method.request.path.proxy'],
+        integrationHttpMethod: 'POST',
+        contentHandling: 'CONVERT_TO_TEXT',
+        passthroughBehavior: 'WHEN_NO_MATCH',
+        requestParameters: { 'integration.request.path.proxy': 'method.request.path.proxy' },
         uri: `arn:aws:apigateway:${valkconfig.Project.Region}:lambda:path/2015-03-31/functions/arn:aws:lambda:eu-west-1:477398036046:function:aws-valkyrie-dev-lambda/invocations`
       }).promise())
       .then(() => l.success(`${valkconfig.Lambda.FunctionName} attached to ${vars.apiName}`))
