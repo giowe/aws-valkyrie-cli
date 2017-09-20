@@ -26,6 +26,7 @@ module.exports = {
     const defaultTemplatePath = path.join(__dirname, '..', 'node_modules', 'valkyrie-scaffolder-default');
     const defaultTemplateListName = `default (${require(path.join(defaultTemplatePath, 'package.json')).version})`;
     const saveValkconfig = () => fs.writeFileSync(path.join(vars.projectFolder, 'valkconfig.json'), JSON.stringify(valkconfig, null, 2));
+
     //SCAFFOLDER SELECTION
     exec('npm root -g')
       .then(({ stdout }) => {
@@ -118,9 +119,36 @@ module.exports = {
         l.success('project packages installed');
       })
 
-      //POLICY CREATION
+      //ROLE CREATION
       .then(() => {
         vars.iam = new AWS.IAM();
+        return vars.iam.createRole({
+          AssumeRolePolicyDocument: JSON.stringify({
+            Version: '2012-10-17',
+            Statement: [
+              {
+                Effect: 'Allow',
+                Principal: {
+                  Service: 'lambda.amazonaws.com'
+                },
+                Action: 'sts:AssumeRole'
+              }
+            ]
+          }),
+          RoleName: `valkyrie-${vars.template.projectName}-lambda-role`,
+          Description: `Valkyrie "${vars.template.projectName}" project role assumed by "valkyrie-${vars.template.projectName}-lambda"`,
+          Path: '/valkyrie/'
+        }).promise();
+      })
+      .then(({ Role: { RoleName: roleName, Arn: roleArn } }) => {
+        valkconfig.Iam.RoleName = roleName;
+        valkconfig.Lambda.Role = roleArn;
+        saveValkconfig();
+        l.success(`${roleName} role (arn: ${roleArn}) created;`);
+      })
+
+      //POLICY CREATION
+      .then(() => {
         return vars.iam.createPolicy({
           PolicyDocument: JSON.stringify({
             Version: '2012-10-17',
@@ -148,33 +176,6 @@ module.exports = {
         l.success(`${policyName} policy (arn: ${policyArn}) created;`);
       })
 
-      //ROLE CREATION
-      .then(() => {
-        return vars.iam.createRole({
-          AssumeRolePolicyDocument: JSON.stringify({
-            Version: '2012-10-17',
-            Statement: [
-              {
-                Effect: 'Allow',
-                Principal: {
-                  Service: 'lambda.amazonaws.com'
-                },
-                Action: 'sts:AssumeRole'
-              }
-            ]
-          }),
-          RoleName: `valkyrie-${vars.template.projectName}-lambda-role`,
-          Description: `Valkyrie "${vars.template.projectName}" project role assumed by "valkyrie-${vars.template.projectName}-lambda"`,
-          Path: '/valkyrie/'
-        }).promise();
-      })
-      .then(({ Role: { RoleName: roleName, Arn: roleArn } }) => {
-        valkconfig.Iam.RoleName = roleName;
-        valkconfig.Lambda.Role = roleArn;
-        saveValkconfig();
-        l.success(`${roleName} role (arn: ${roleArn}) created;`);
-      })
-
       //ATTACHING POLICY
       .then(() => {
         vars.iam.attachRolePolicy({
@@ -184,14 +185,19 @@ module.exports = {
       })
       .then(() => l.success(`${vars.policyName} attached to ${valkconfig.Iam.RoleName};`))
 
+      .then(() => {
+        l.log('waiting 10 seconds...');
+        return new Promise(resolve => setTimeout(resolve, 10000));
+      })
+
       //LAMBDA CREATION
-      /*.then(() => zipdir(vars.projectFolder))
+      .then(() => zipdir(vars.projectFolder))
       .then(buffer => {
         const data = Object.assign(valkconfig.Lambda, { Code: { ZipFile: buffer } });
         l.log(data);
         return new AWS.Lambda({ region: valkconfig.Project.Region }).createFunction(data).promise();
       })
-      .then((data) => l.success(data))*/
+      .then((data) => l.success(data))
 
       //API CREATION
       .then(() => {
