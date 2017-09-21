@@ -9,11 +9,14 @@ module.exports = {
   fn: ({ l }, valkconfig = null) => new Promise((resolve, reject) => {
     const programmaticDeletion = valkconfig !== null;
     if (!valkconfig) valkconfig = getProjectInfo().valkconfig;
-    const vars = { iam: new AWS.IAM() };
-    const region = valkconfig.Project.Region;
-    const PolicyArn = valkconfig.Iam.PolicyArn;
-    const RoleName = valkconfig.Iam.RoleName;
-    const restApiId = valkconfig.Api.Id;
+    const vars = {};
+
+    const { Region: region } = valkconfig.Project;
+    const { PolicyArn, RoleName } = valkconfig.Iam;
+    const { FunctionName } = valkconfig.Lambda;
+    const { Id: restApiId } = valkconfig.Api;
+
+    const iam = new AWS.IAM();
 
     (() => {
       if (!programmaticDeletion) {
@@ -26,30 +29,26 @@ module.exports = {
       }
       else return Promise.resolve();
     })()
-      .then(() => {
-        if (PolicyArn && RoleName) return vars.iam.detachRolePolicy({ PolicyArn, RoleName }).promise();
-      })
-      .then(() => {
-        if (PolicyArn && RoleName) l.success(`${PolicyArn} detached from ${RoleName};`);
-      })
-      .then(() => {
-        if (PolicyArn) return vars.iam.deletePolicy({ PolicyArn }).promise();
-      })
-      .then(() => {
-        if (PolicyArn) l.success(`${PolicyArn} policy deleted;`);
-      })
-      .then(() => {
-        if (RoleName) return vars.iam.deleteRole({ RoleName }).promise();
-      })
-      .then(() => {
-        if (RoleName) l.success(`${RoleName} role deleted;`);
-      })
-      .then(() => {
-        if (restApiId) return new AWS.APIGateway({ region }).deleteRestApi({ restApiId }).promise();
-      })
-      .then(() => {
-        if (restApiId) l.success(`${restApiId} API deleted;`);
-      })
+      .then(() => { if (PolicyArn && RoleName) return iam.detachRolePolicy({ PolicyArn, RoleName }).promise(); })
+      .then(({ ResponseMetadata }) => { if (ResponseMetadata) l.success(`${PolicyArn} detached from ${RoleName};`); })
+      //.then(() => { if (PolicyArn && RoleName) l.success(`${PolicyArn} detached from ${RoleName};`); })
+
+      .then(() => { if (PolicyArn) return iam.deletePolicy({ PolicyArn }).promise(); })
+      .then(({ ResponseMetadata }) => { if (ResponseMetadata) l.success(`${PolicyArn} policy deleted;`); })
+      //.then(() => { if (PolicyArn) l.success(`${PolicyArn} policy deleted;`); })
+
+      .then(() => { if (RoleName) return iam.deleteRole({ RoleName }).promise(); })
+      .then(({ ResponseMetadata }) => { if (ResponseMetadata) l.success(`${RoleName} role deleted;`); })
+      //.then(() => { if (RoleName) l.success(`${RoleName} role deleted;`); })
+
+      .then(() => { if (FunctionName) return new AWS.Lambda({ region }).deleteFunction({ FunctionName }).promise(); })
+      .then(console.log) //todo capire la response
+      //.then(() => { if (FunctionName) l.success(`${FunctionName} lambda deleted;`); })
+
+      .then(() => { if (restApiId) return new AWS.APIGateway({ region }).deleteRestApi({ restApiId }).promise(); })
+      .then(console.log) //todo capire la response
+      //.then(() => { if (restApiId) l.success(`${restApiId} API deleted;`); })
+
       .then(() => l.success('deletion completed'))
       .then(resolve)
       .catch(err => {

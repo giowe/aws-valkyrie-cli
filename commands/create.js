@@ -80,14 +80,6 @@ module.exports = {
       .then(answers => {
         vars.template = answers;
         valkconfig.Project.Region = answers.region;
-        Object.assign(valkconfig.Lambda, {
-          FunctionName: `valkyrie-${answers.projectName}-lambda`,
-          Description: answers.description,
-          Handler: 'index.handler', //todo I have to do it programmatically from
-          MemorySize: answers.memorySize,
-          Timeout: answers.timeout,
-          Runtime: answers.runtime
-        });
       })
 
       //TEMPLATING AND SCAFFOLDING APPLICATION
@@ -176,7 +168,7 @@ module.exports = {
         l.success(`${policyName} policy (arn: ${policyArn}) created;`);
       })
 
-      //ATTACHING POLICY
+      //ATTACHING POLICY TO ROLE
       .then(() => {
         vars.iam.attachRolePolicy({
           PolicyArn: valkconfig.Iam.PolicyArn,
@@ -185,17 +177,35 @@ module.exports = {
       })
       .then(() => l.success(`${vars.policyName} attached to ${valkconfig.Iam.RoleName};`))
 
-      .then(() => {
-        l.log('waiting 10 seconds...');
-        return new Promise(resolve => setTimeout(resolve, 10000));
-      })
-
       //LAMBDA CREATION
       .then(() => zipdir(vars.projectFolder))
       .then(buffer => {
-        const data = Object.assign(valkconfig.Lambda, { Code: { ZipFile: buffer } });
-        l.log(data);
-        return new AWS.Lambda({ region: valkconfig.Project.Region }).createFunction(data).promise();
+        const params = {
+          FunctionName: `valkyrie-${vars.template.projectName}-lambda`,
+          Description: vars.template.description,
+          Handler: 'index.handler', //todo I have to do it programmatically from
+          MemorySize: vars.template.memorySize,
+          Timeout: vars.template.timeout,
+          Runtime: vars.template.runtime,
+          Code: { ZipFile: buffer }
+        };
+        const lambda = new AWS.Lambda({ region: valkconfig.Project.Region });
+        const tryCreate = (promise, maxRetries = 6) => {
+          if (!promise) {
+            promise = new Promise((resolve, reject) => {
+              return lambda.createFunction(params).promise()
+                .then(resolve)
+                .catch(err => {
+                  console.log('faillito, tentativo', maxRetries);
+                  if (maxRetries > 0) setTimeout(() => tryCreate(promise, maxRetries - 1), 1000);
+                  else reject(err);
+                });
+            });
+            return promise;
+          } else return Promise.resolve(promise);
+        };
+
+        return tryCreate();
       })
       .then((data) => l.success(data))
 
