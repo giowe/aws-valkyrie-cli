@@ -9,7 +9,6 @@ module.exports = {
   fn: ({ l }, valkconfig = null) => new Promise((resolve, reject) => {
     const programmaticDeletion = valkconfig !== null;
     if (!valkconfig) valkconfig = getProjectInfo().valkconfig;
-    const vars = {};
 
     const { Region: region } = valkconfig.Project;
     const { PolicyArn, RoleName } = valkconfig.Iam;
@@ -20,7 +19,7 @@ module.exports = {
 
     (() => {
       if (!programmaticDeletion) {
-        return inquirer.prompt([{ type: 'confirm', name: 'confirm', message: 'All aws infrastructure related to this project will be deleted and it will be impossible to restore it, including roles and policies. Continue?', default: false }]).then(({ confirm }) => {
+        return inquirer.prompt([{ type: 'confirm', name: 'confirm', message: 'All AWS infrastructure related to this project will be deleted and it will be impossible to restore it, including roles and policies. Continue?', default: false }]).then(({ confirm }) => {
           if (!confirm) {
             l.log('process aborted;');
             breakChain();
@@ -30,24 +29,19 @@ module.exports = {
       else return Promise.resolve();
     })()
       .then(() => { if (PolicyArn && RoleName) return iam.detachRolePolicy({ PolicyArn, RoleName }).promise(); })
-      .then(({ ResponseMetadata }) => { if (ResponseMetadata) l.success(`${PolicyArn} detached from ${RoleName};`); })
-      //.then(() => { if (PolicyArn && RoleName) l.success(`${PolicyArn} detached from ${RoleName};`); })
+      .then(data => { if (data) l.success(`${PolicyArn} detached from ${RoleName};`); })
 
       .then(() => { if (PolicyArn) return iam.deletePolicy({ PolicyArn }).promise(); })
-      .then(({ ResponseMetadata }) => { if (ResponseMetadata) l.success(`${PolicyArn} policy deleted;`); })
-      //.then(() => { if (PolicyArn) l.success(`${PolicyArn} policy deleted;`); })
+      .then(data => { if (data) l.success(`${PolicyArn} policy deleted;`); })
 
       .then(() => { if (RoleName) return iam.deleteRole({ RoleName }).promise(); })
-      .then(({ ResponseMetadata }) => { if (ResponseMetadata) l.success(`${RoleName} role deleted;`); })
-      //.then(() => { if (RoleName) l.success(`${RoleName} role deleted;`); })
+      .then(data => { if (data) l.success(`${RoleName} role deleted;`); })
 
       .then(() => { if (FunctionName) return new AWS.Lambda({ region }).deleteFunction({ FunctionName }).promise(); })
-      .then(console.log) //todo capire la response
-      //.then(() => { if (FunctionName) l.success(`${FunctionName} lambda deleted;`); })
+      .then(data => { if (data) l.success(`${FunctionName} lambda deleted;`); })
 
       .then(() => { if (restApiId) return new AWS.APIGateway({ region }).deleteRestApi({ restApiId }).promise(); })
-      .then(console.log) //todo capire la response
-      //.then(() => { if (restApiId) l.success(`${restApiId} API deleted;`); })
+      .then(data => { if (data) l.success(`${restApiId} API deleted`); })
 
       .then(() => l.success('deletion completed'))
       .then(resolve)

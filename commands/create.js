@@ -65,8 +65,9 @@ module.exports = {
           { type: 'input', name: 'timeout', message: 'lambda timeout:', validate: notNullValidator, default: '3' },
           { type: 'input', name: 'runtime', message: 'lambda runtime:', validate: notNullValidator, default: 'nodejs6.10' }
         ];
-        const { inputs: scaffolderInputs, source } = require(vars.scaffolderPath);
+        const { inputs: scaffolderInputs, source, handler } = require(vars.scaffolderPath);
         vars.scaffolderSourcePath = path.join(vars.scaffolderPath, source);
+        vars.handler = handler;
         const l = defaultInputs.length;
         return inquirer.prompt([
           ...defaultInputs,
@@ -99,17 +100,7 @@ module.exports = {
           dirPath => fs.mkdirSync(path.join(path.join(cwd, subPath(dirPath, vars.templateName))))
         );
       })
-      .then(() => {
-        l.success(`project scaffolded in ${vars.projectFolder}`);
-        l.log('installing npm packages...');
-      })
-
-      //INSTALLING PACKAGES
-      .then(() => exec(`npm install --prefix ${vars.projectFolder}`))
-      .then(() => {
-        del.sync(path.join(vars.projectFolder, 'etc'), { force: true });
-        l.success('project packages installed');
-      })
+      .then(() => l.success(`project scaffolded in ${vars.projectFolder}`))
 
       //ROLE CREATION
       .then(() => {
@@ -134,7 +125,7 @@ module.exports = {
       })
       .then(({ Role: { RoleName: roleName, Arn: roleArn } }) => {
         valkconfig.Iam.RoleName = roleName;
-        valkconfig.Lambda.Role = roleArn;
+        vars.roleArn = roleArn;
         saveValkconfig();
         l.success(`${roleName} role (arn: ${roleArn}) created;`);
       })
@@ -177,37 +168,55 @@ module.exports = {
       })
       .then(() => l.success(`${vars.policyName} attached to ${valkconfig.Iam.RoleName};`))
 
+      //INSTALLING PACKAGES
+      .then(() => {
+        l.log('installing npm packages...');
+        return exec(`npm install --prefix ${vars.projectFolder}`);
+      })
+      .then(() => {
+        del.sync(path.join(vars.projectFolder, 'etc'), { force: true });
+        l.success('project packages installed;');
+      })
+
       //LAMBDA CREATION
       .then(() => zipdir(vars.projectFolder))
-      .then(buffer => {
-        const params = {
+      .then(async (buffer) => {
+        l.inlineLog(l.prefix, 'creating lambda function...');
+        vars.lambdaConfig = {
           FunctionName: `valkyrie-${vars.template.projectName}-lambda`,
           Description: vars.template.description,
-          Handler: 'index.handler', //todo I have to do it programmatically from
+          Handler: vars.handler,
           MemorySize: vars.template.memorySize,
           Timeout: vars.template.timeout,
           Runtime: vars.template.runtime,
-          Code: { ZipFile: buffer }
+          Role: vars.roleArn
         };
-        const lambda = new AWS.Lambda({ region: valkconfig.Project.Region });
-        const tryCreate = (promise, maxRetries = 6) => {
-          if (!promise) {
-            promise = new Promise((resolve, reject) => {
-              return lambda.createFunction(params).promise()
-                .then(resolve)
-                .catch(err => {
-                  console.log('faillito, tentativo', maxRetries);
-                  if (maxRetries > 0) setTimeout(() => tryCreate(promise, maxRetries - 1), 1000);
-                  else reject(err);
-                });
-            });
-            return promise;
-          } else return Promise.resolve(promise);
+        const params = Object.assign({ Code: { ZipFile: buffer } }, vars.lambdaConfig);
+        const lambda = vars.lambda = new AWS.Lambda({ region: valkconfig.Project.Region });
+
+        const wait = () => new Promise(resolve => setTimeout(resolve, 1000));
+        const createLambda = async (maxRetries = 10) => {
+          try {
+            const result = await lambda.createFunction(params).promise();
+            l.inlineLog('\n');
+            return result;
+          } catch(err) {
+            if (maxRetries > 0) {
+              l.inlineLog('.');
+              await wait();
+              return await createLambda(maxRetries -1);
+            }
+            else throw err;
+          }
         };
 
-        return tryCreate();
+        return await createLambda();
       })
-      .then((data) => l.success(data))
+      .then(({ FunctionName, FunctionArn }) => {
+        vars.FunctionArn = FunctionArn;
+        valkconfig.Lambda = vars.lambdaConfig;
+        l.success(`${FunctionName} created;`);
+      })
 
       //API CREATION
       .then(() => {
@@ -258,9 +267,9 @@ module.exports = {
         contentHandling: 'CONVERT_TO_TEXT',
         passthroughBehavior: 'WHEN_NO_MATCH',
         requestParameters: { 'integration.request.path.proxy': 'method.request.path.proxy' },
-        uri: `arn:aws:apigateway:${valkconfig.Project.Region}:lambda:path/2015-03-31/functions/arn:aws:lambda:eu-west-1:477398036046:function:aws-valkyrie-dev-lambda/invocations`
+        uri: `arn:aws:apigateway:${valkconfig.Project.Region}:lambda:path/2015-03-31/functions/${vars.FunctionArn}/invocations`
       }).promise())
-      .then(() => l.success(`${valkconfig.Lambda.FunctionName} attached to ${vars.apiName}`))
+      .then(() => l.success(`${valkconfig.Lambda.FunctionName} attached to ${vars.apiName};`))
 
       //RESPONSE INTEGRATION
       .then(() => vars.apigateway.putIntegrationResponse({
@@ -272,12 +281,22 @@ module.exports = {
       }).promise())
       .then(() => l.success('response integrated;'))
 
+      //ADDING PERMISSION TO LAMBDA TO BE CALLED FROM API GATEWAY
+      .then(() => vars.lambda.addPermission({
+        Action: 'lambda:InvokeFunction',
+        FunctionName: valkconfig.Lambda.FunctionName,
+        Principal: 'apigateway.amazonaws.com',
+        SourceArn: `arn:aws:execute-api:${valkconfig.Project.Region}:${valkconfig.Iam.PolicyArn.split(':')[4]}:${valkconfig.Api.Id}/*/*/*`,
+        StatementId: 'ID-1'
+      }).promise())
+      .then(data => l.success('permission granted to lambda to be called from api-gateway;'))
+
       //DEPLOYMENT CREATION
       .then(() => vars.apigateway.createDeployment({
         restApiId: valkconfig.Api.Id,
         stageName: 'staging'
       }).promise())
-      .then(() => l.success('staging deployiment created.'))
+      .then(() => l.success('staging deployiment created;'))
 
       .then(() => {
         saveValkconfig();

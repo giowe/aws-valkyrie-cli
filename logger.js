@@ -53,6 +53,17 @@ function log(color, ...args) {
   console.log(prefix, color, ...args, colors.reset);
 }
 
+function inlineLog(color, ...args) {
+  args.unshift(color);
+  process.stdout.write(`${args.map(arg => {
+    switch (typeof arg) {
+      case 'string': return arg;
+      case 'object': return JSON.stringify(arg, null, 2);
+      default: return '' + arg;
+    }
+  }).join(' ')}${colors.reset}`);
+}
+
 function frame(text) {
   const border = repeat('─', text.length + 2);
   const padding = repeat(' ', 7);
@@ -76,10 +87,12 @@ function success(...args) {
 }
 
 module.exports = {
+  prefix,
   frame,
   repeat,
   leftPad,
   log,
+  inlineLog,
   fail,
   error,
   success,

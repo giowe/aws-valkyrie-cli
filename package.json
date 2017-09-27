@@ -1,6 +1,6 @@
 {
   "name": "aws-valkyrie-cli",
-  "version": "0.0.1",
+  "version": "0.1.0",
   "description": "",
   "author": "Giovanni Bruno",
   "contributors": [
@@ -18,17 +18,17 @@
   "main": "main.js",
   "dependencies": {
     "aws-cwlogs": "^2.3.0",
-    "aws-sdk": "^2.116.0",
+    "aws-sdk": "^2.123.0",
     "del": "^3.0.0",
     "gulp": "^3.9.1",
-    "inquirer": "^3.2.3",
-    "request": "^2.81.0",
+    "inquirer": "^3.3.0",
+    "request": "^2.83.0",
     "require-dir": "^0.3.2",
-    "valkyrie-scaffolder-default": "^0.0.10",
+    "valkyrie-scaffolder-default": "^1.0.1",
     "zip-dir": "^1.0.2"
   },
   "devDependencies": {
-    "eslint": "^4.6.1"
+    "eslint": "^4.7.2"
   },
   "bugs": {
     "url": "https://github.com/giowe/aws-valkyrie-cli/issues"
