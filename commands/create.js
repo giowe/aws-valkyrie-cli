@@ -289,7 +289,7 @@ module.exports = {
         SourceArn: `arn:aws:execute-api:${valkconfig.Project.Region}:${valkconfig.Iam.PolicyArn.split(':')[4]}:${valkconfig.Api.Id}/*/*/*`,
         StatementId: 'ID-1'
       }).promise())
-      .then(data => l.success('permission granted to lambda to be called from api-gateway;'))
+      .then(() => l.success('permission granted to lambda to be called from api-gateway;'))
 
       //DEPLOYMENT CREATION
       .then(() => vars.apigateway.createDeployment({
