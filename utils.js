@@ -1,6 +1,8 @@
 'use strict';
 const fs = require('fs');
+const os = require('os');
 const path = require('path');
+const AWS = require('aws-sdk');
 const e = module.exports = {};
 
 e.listFiles = (rootPath, onFile, onFolder) => new Promise((resolve) => {
@@ -35,6 +37,25 @@ e.getProjectInfo = () => {
   }
 
   throw new Error('not a Valkyrie project (or any of the parent directories): missing valkconfig.json');
+};
+
+e.getGlobalConfig = () => {
+  try {
+    return JSON.parse(fs.readFileSync(path.join(os.homedir(), '.valkconfig')));
+  } catch (ignore) {
+    return {};
+  }
+};
+
+e.saveGlobalConfig = (config) => {
+  fs.writeFileSync(path.join(os.homedir(), '.valkconfig'), typeof config === 'string' ? config : JSON.stringify(config, null, 2));
+};
+
+
+e.getAWSCredentials = () => {
+  const config = e.getGlobalConfig();
+  if (config.secretAccessKey && config.accessKeyId) return { credentials: new AWS.Credentials(config) };
+  return null;
 };
 
 e.breakChain = (data) => {

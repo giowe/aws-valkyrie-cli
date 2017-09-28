@@ -7,20 +7,20 @@ const exec = promisify(require('child_process').exec);
 const zipdir = promisify(require('zip-dir'));
 const path = require('path');
 const fs = require('fs');
-const { listFiles, subPath } = require('../utils');
+const { getAWSCredentials, listFiles, subPath } = require('../utils');
 const cwd = process.cwd();
 
 module.exports = {
   description: 'Create a new Valkyrie application',
   fn: ({ l, argv, commands }) => new Promise((resolve, reject) => {
     const vars = { };
-    //todo check if valkconf is not already available
     const valkconfig = {
       Project: {},
       Iam: {},
       Api: {},
       Lambda: {}
     };
+    const awsCredentials = getAWSCredentials();
     const notNullValidator = (val) => val !== '';
     const templatesPrefix = 'valkyrie-scaffolder-';
     const defaultTemplatePath = path.join(__dirname, '..', 'node_modules', 'valkyrie-scaffolder-default');
@@ -80,31 +80,14 @@ module.exports = {
 
       .then(answers => {
         vars.template = answers;
-        valkconfig.Project.Region = answers.region;
-      })
-
-      //TEMPLATING AND SCAFFOLDING APPLICATION
-      .then(() => {
         vars.projectFolder = path.join(cwd, vars.template.projectName);
+        valkconfig.Project.Region = answers.region;
         fs.mkdirSync(vars.projectFolder);
-        return listFiles(vars.scaffolderSourcePath,
-          (filePath, content) => {
-            let fileName = filePath.replace(vars.scaffolderSourcePath, '');
-            fileName = fileName.replace('npmignore', 'gitignore');
-            Object.entries(vars.template).forEach(([key, value]) => {
-              const re = new RegExp(`{{${key}}}`, 'g');
-              content = content.replace(re, value);
-            });
-            fs.writeFileSync(path.join(vars.projectFolder, fileName), content);
-          },
-          dirPath => fs.mkdirSync(path.join(path.join(cwd, subPath(dirPath, vars.templateName))))
-        );
       })
-      .then(() => l.success(`project scaffolded in ${vars.projectFolder}`))
 
       //ROLE CREATION
       .then(() => {
-        vars.iam = new AWS.IAM();
+        vars.iam = new AWS.IAM(awsCredentials);
         return vars.iam.createRole({
           AssumeRolePolicyDocument: JSON.stringify({
             Version: '2012-10-17',
@@ -168,6 +151,23 @@ module.exports = {
       })
       .then(() => l.success(`${vars.policyName} attached to ${valkconfig.Iam.RoleName};`))
 
+      //TEMPLATING AND SCAFFOLDING APPLICATION
+      .then(() => {
+        return listFiles(vars.scaffolderSourcePath,
+          (filePath, content) => {
+            let fileName = filePath.replace(vars.scaffolderSourcePath, '');
+            fileName = fileName.replace('npmignore', 'gitignore');
+            Object.entries(vars.template).forEach(([key, value]) => {
+              const re = new RegExp(`{{${key}}}`, 'g');
+              content = content.replace(re, value);
+            });
+            fs.writeFileSync(path.join(vars.projectFolder, fileName), content);
+          },
+          dirPath => fs.mkdirSync(path.join(path.join(cwd, subPath(dirPath, vars.templateName))))
+        );
+      })
+      .then(() => l.success(`project scaffolded in ${vars.projectFolder}`))
+
       //INSTALLING PACKAGES
       .then(() => {
         l.log('installing npm packages...');
@@ -192,7 +192,7 @@ module.exports = {
           Role: vars.roleArn
         };
         const params = Object.assign({ Code: { ZipFile: buffer } }, vars.lambdaConfig);
-        const lambda = vars.lambda = new AWS.Lambda({ region: valkconfig.Project.Region });
+        const lambda = vars.lambda = new AWS.Lambda(Object.assign({ region: valkconfig.Project.Region }, awsCredentials));
 
         const wait = () => new Promise(resolve => setTimeout(resolve, 1000));
         const createLambda = async (maxRetries = 10) => {
@@ -221,7 +221,7 @@ module.exports = {
       //API CREATION
       .then(() => {
         vars.apiName = `valkyrie-${vars.template.projectName}-api`;
-        vars.apigateway = new AWS.APIGateway({ region: valkconfig.Project.Region });
+        vars.apigateway = new AWS.APIGateway(Object.assign({ region: valkconfig.Project.Region }, awsCredentials));
         return vars.apigateway.createRestApi({
           name: vars.apiName,
           description: 'Valkyrie application'

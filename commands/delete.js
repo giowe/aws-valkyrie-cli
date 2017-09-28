@@ -1,7 +1,7 @@
 'use strict';
 
 const AWS = require('aws-sdk');
-const { getProjectInfo, breakChain } = require('../utils');
+const { getAWSCredentials, getProjectInfo, breakChain } = require('../utils');
 const inquirer = require('inquirer');
 
 module.exports = {
@@ -10,12 +10,13 @@ module.exports = {
     const programmaticDeletion = valkconfig !== null;
     if (!valkconfig) valkconfig = getProjectInfo().valkconfig;
 
+    const awsCredentials = getAWSCredentials();
     const { Region: region } = valkconfig.Project;
     const { PolicyArn, RoleName } = valkconfig.Iam;
     const { FunctionName } = valkconfig.Lambda;
     const { Id: restApiId } = valkconfig.Api;
 
-    const iam = new AWS.IAM();
+    const iam = new AWS.IAM(awsCredentials);
 
     (() => {
       if (!programmaticDeletion) {
@@ -37,10 +38,10 @@ module.exports = {
       .then(() => { if (RoleName) return iam.deleteRole({ RoleName }).promise(); })
       .then(data => { if (data) l.success(`${RoleName} role deleted;`); })
 
-      .then(() => { if (FunctionName) return new AWS.Lambda({ region }).deleteFunction({ FunctionName }).promise(); })
+      .then(() => { if (FunctionName) return new AWS.Lambda(Object.assign({ region }, awsCredentials)).deleteFunction({ FunctionName }).promise(); })
       .then(data => { if (data) l.success(`${FunctionName} lambda deleted;`); })
 
-      .then(() => { if (restApiId) return new AWS.APIGateway({ region }).deleteRestApi({ restApiId }).promise(); })
+      .then(() => { if (restApiId) return new AWS.APIGateway(Object.assign({ region }, awsCredentials)).deleteRestApi({ restApiId }).promise(); })
       .then(data => { if (data) l.success(`${restApiId} API deleted`); })
 
       .then(() => l.success('deletion completed'))
