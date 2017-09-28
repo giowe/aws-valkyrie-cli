@@ -1,7 +1,7 @@
 'use strict';
 
-const { getProjectInfo, getAWSCredentials, listFiles, subPath } = require('../utils');
-//const CwLogs = require('aws-cwlogs');
+const { getProjectInfo, getAWSCredentials } = require('../utils');
+const CwLogs = require('aws-cwlogs');
 
 module.exports = {
   description: 'Show real-time Valkyrie application logs',
@@ -11,7 +11,7 @@ module.exports = {
     description: 'Specify a CloudWatch Logs stream, latest by default;'
   }],
   fn: ({ argv }) => new Promise(() => {
-    /*const { valkconfig } = getProjectInfo();
+    const { valkconfig } = getProjectInfo();
 
     new CwLogs({
       region: valkconfig.Project.Region,
@@ -19,6 +19,6 @@ module.exports = {
       streamname: argv.stream || argv.s,
       momentTimeFormat: 'hh:mm:ss:SSS',
       logFormat: 'lambda'
-    }).start();*/
+    }).start();
   })
 };

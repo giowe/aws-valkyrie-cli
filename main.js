@@ -1,12 +1,10 @@
 'use strict';
-
 const path = require('path');
-const { argv } = require('yargs');
-console.log('qui');
 const requireDir = require('require-dir');
 const request = require('request');
 const l = require('./logger');
 const pkg = require('./package.json');
+const argv = require('./argv');
 
 if ((argv.version || argv.v) && !argv._.length) {
   const out = [`${pkg.name} ${pkg.version}`];
