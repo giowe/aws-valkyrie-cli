@@ -1,7 +1,7 @@
 'use strict';
 const { promisify } = require('util');
 const zipdir = promisify(require('zip-dir'));
-const { getProjectInfo, getAWSCredentials, listFiles, subPath } = require('../utils');
+const { getProjectInfo, getAWSCredentials } = require('../utils');
 
 const AWS = require('aws-sdk');
 

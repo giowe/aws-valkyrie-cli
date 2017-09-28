@@ -2,6 +2,7 @@
 
 const path = require('path');
 const { argv } = require('yargs');
+console.log('qui');
 const requireDir = require('require-dir');
 const request = require('request');
 const l = require('./logger');
