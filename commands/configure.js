@@ -10,7 +10,7 @@ module.exports = {
     short: 'e',
     description: 'Edit global .valkconfig file with you default editor;'
   }],
-  fn: ({ l, commands, argv }) => new Promise((resolve, reject) => {
+  fn: ({ argv }) => new Promise((resolve, reject) => {
     const config = getGlobalConfig();
 
     if (argv.edit || argv.e) {

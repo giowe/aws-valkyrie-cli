@@ -17,7 +17,7 @@
   "license": "ISC",
   "main": "main.js",
   "dependencies": {
-    "aws-cwlogs": "^2.3.3",
+    "aws-cwlogs": "^2.4.0",
     "aws-sdk": "^2.124.0",
     "del": "^3.0.0",
     "gulp": "^3.9.1",

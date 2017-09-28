@@ -17,10 +17,10 @@ module.exports = {
       description: 'Updates just the AWS Lambda configuration part;'
     }
   ],
-  fn: ({ l, commands, argv }) => new Promise((resolve, reject) => {
+  fn: ({ l, argv }) => new Promise((resolve, reject) => {
     const { valkconfig, root } = getProjectInfo();
     const promises = [];
-    const lambda = new AWS.Lambda(Object.assign({ region: valkconfig.Project.Region }, getAWSCredentials()));
+    const lambda = new AWS.Lambda(Object.assign({ region: valkconfig.Project.Region }, { credentials: getAWSCredentials() }));
     if ((!argv.code && !argv.config) || argv.code) promises.push(new Promise((resolve, reject) => {
       l.log('updating lambda code...');
       zipdir(root)

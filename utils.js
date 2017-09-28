@@ -54,7 +54,7 @@ e.saveGlobalConfig = (config) => {
 
 e.getAWSCredentials = () => {
   const config = e.getGlobalConfig();
-  if (config.secretAccessKey && config.accessKeyId) return { credentials: new AWS.Credentials(config) };
+  if (config.secretAccessKey && config.accessKeyId) return new AWS.Credentials(config);
   return null;
 };
 

@@ -20,7 +20,7 @@ module.exports = {
       Api: {},
       Lambda: {}
     };
-    const awsCredentials = getAWSCredentials();
+    const awsCredentials = { credentials: getAWSCredentials() };
     const notNullValidator = (val) => val !== '';
     const templatesPrefix = 'valkyrie-scaffolder-';
     const defaultTemplatePath = path.join(__dirname, '..', 'node_modules', 'valkyrie-scaffolder-default');
@@ -58,7 +58,7 @@ module.exports = {
       .then(({ scaffolder }) => {
         vars.scaffolderPath = vars.scaffolders[scaffolder].path;
         const defaultInputs = [
-          { type: 'input', name: 'projectName', message: 'project name:', validate: notNullValidator, default: 'test' },
+          { type: 'input', name: 'projectName', message: 'project name:', validate: notNullValidator }, //todo npm compliant names
           { type: 'input', name: 'region', message: 'region name:', validate: notNullValidator, default: 'eu-west-1' },
           { type: 'input', name: 'description', message: 'description:' },
           { type: 'input', name: 'memorySize', message: 'lambda memory size:', validate: notNullValidator, default: '128' },

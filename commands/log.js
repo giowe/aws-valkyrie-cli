@@ -18,7 +18,8 @@ module.exports = {
       logGroupName: `/aws/lambda/${valkconfig.Lambda.FunctionName}`,
       streamname: argv.stream || argv.s,
       momentTimeFormat: 'hh:mm:ss:SSS',
-      logFormat: 'lambda'
+      logFormat: 'lambda',
+      credentials: getAWSCredentials()
     }).start();
   })
 };
