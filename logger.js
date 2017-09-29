@@ -50,12 +50,13 @@ function repeat(text, len) {
 }
 
 function log(color, ...args) {
-  console.log(prefix, color, ...args, colors.reset);
-}
-
-function inlineLog(color, ...args) {
+  const options = { prefix: true, inline: false };
+  if (typeof args[args.length -1] === 'object') Object.assign(options, args.pop());
   args.unshift(color);
-  process.stdout.write(`${args.map(arg => {
+  if (options.prefix) args.unshift(prefix);
+
+  if (!options.inline) console.log(...args, colors.reset);
+  else process.stdout.write(`${args.map(arg => {
     switch (typeof arg) {
       case 'string': return arg;
       case 'object': return JSON.stringify(arg, null, 2);
@@ -64,13 +65,13 @@ function inlineLog(color, ...args) {
   }).join(' ')}${colors.reset}`);
 }
 
-function frame(text) {
+function frame(text, options) {
   const border = repeat('─', text.length + 2);
-  const padding = repeat(' ', 7);
+  const padding = repeat(' ', 6);
   console.log([
-    `${padding}┌${border}┐`,
-    `${prefix} │ ${text} │`,
-    `${padding}└${border}┘`
+    `${padding} ┌${border}┐`,
+    `${options.prefix ? prefix : padding } │ ${text} │`,
+    `${padding} └${border}┘`
   ].join('\n'));
 }
 
@@ -86,15 +87,19 @@ function success(...args) {
   log(`[${colors.green}SUCCESS${colors.reset}]`, ...args);
 }
 
+function wait(...args) {
+  log(`[${colors.white}WAIT${colors.reset}]`, ...args);
+}
+
 module.exports = {
   prefix,
   frame,
   repeat,
   leftPad,
   log,
-  inlineLog,
   fail,
   error,
   success,
+  wait,
   colors
 };

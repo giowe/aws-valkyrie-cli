@@ -63,3 +63,5 @@ e.breakChain = (data) => {
   e.chainBraker = true;
   throw e;
 };
+
+e.joinUrl = (...args) => args.filter(e => e).map(e => e.replace('/', '')).join('/');

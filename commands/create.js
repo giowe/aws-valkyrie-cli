@@ -3,11 +3,12 @@ const inquirer = require('inquirer');
 const AWS = require('aws-sdk');
 const del = require('del');
 const { promisify } = require('util');
+const validate = require('validate-npm-package-name');
 const exec = promisify(require('child_process').exec);
 const zipdir = promisify(require('zip-dir'));
 const path = require('path');
 const fs = require('fs');
-const { getAWSCredentials, listFiles, subPath } = require('../utils');
+const { getAWSCredentials, listFiles, subPath, joinUrl } = require('../utils');
 const cwd = process.cwd();
 
 module.exports = {
@@ -21,7 +22,7 @@ module.exports = {
       Lambda: {}
     };
     const awsCredentials = { credentials: getAWSCredentials() };
-    const notNullValidator = (val) => val !== '';
+    const notNullValidator = (val) => val === '' ? 'required field;' : true;
     const templatesPrefix = 'valkyrie-scaffolder-';
     const defaultTemplatePath = path.join(__dirname, '..', 'node_modules', 'valkyrie-scaffolder-default');
     const defaultTemplateListName = `default (${require(path.join(defaultTemplatePath, 'package.json')).version})`;
@@ -58,16 +59,24 @@ module.exports = {
       .then(({ scaffolder }) => {
         vars.scaffolderPath = vars.scaffolders[scaffolder].path;
         const defaultInputs = [
-          { type: 'input', name: 'projectName', message: 'project name:', validate: notNullValidator }, //todo npm compliant names
+          { type: 'input', name: 'projectName', message: 'project name:', validate: (name => {
+            const { validForNewPackages, warnings, errors } = validate(name);
+            if (validForNewPackages) return true;
+            const out = [];
+            if (errors) out.push(...errors);
+            if (warnings) out.push(...warnings);
+            return `${out.join(', ')};`;
+          }) },
           { type: 'input', name: 'region', message: 'region name:', validate: notNullValidator, default: 'eu-west-1' },
           { type: 'input', name: 'description', message: 'description:' },
           { type: 'input', name: 'memorySize', message: 'lambda memory size:', validate: notNullValidator, default: '128' },
           { type: 'input', name: 'timeout', message: 'lambda timeout:', validate: notNullValidator, default: '3' },
           { type: 'input', name: 'runtime', message: 'lambda runtime:', validate: notNullValidator, default: 'nodejs6.10' }
         ];
-        const { inputs: scaffolderInputs, source, handler } = require(vars.scaffolderPath);
+        const { inputs: scaffolderInputs, source, handler, root } = require(vars.scaffolderPath);
         vars.scaffolderSourcePath = path.join(vars.scaffolderPath, source);
         vars.handler = handler;
+        vars.root = root;
         const l = defaultInputs.length;
         return inquirer.prompt([
           ...defaultInputs,
@@ -170,7 +179,7 @@ module.exports = {
 
       //INSTALLING PACKAGES
       .then(() => {
-        l.log('installing npm packages...');
+        l.wait('installing npm packages...');
         return exec(`npm install --prefix ${vars.projectFolder}`);
       })
       .then(() => {
@@ -181,7 +190,7 @@ module.exports = {
       //LAMBDA CREATION
       .then(() => zipdir(vars.projectFolder))
       .then(async (buffer) => {
-        l.inlineLog(l.prefix, 'creating lambda function...');
+        l.wait('creating lambda function...', { inline: true });
         vars.lambdaConfig = {
           FunctionName: `valkyrie-${vars.template.projectName}-lambda`,
           Description: vars.template.description,
@@ -198,11 +207,11 @@ module.exports = {
         const createLambda = async (maxRetries = 10) => {
           try {
             const result = await lambda.createFunction(params).promise();
-            l.inlineLog('\n');
+            l.log('\n', { prefix: false, inline: true });
             return result;
           } catch(err) {
             if (maxRetries > 0) {
-              l.inlineLog('.');
+              l.log('.', { prefix: false, inline: true });
               await wait();
               return await createLambda(maxRetries -1);
             }
@@ -301,7 +310,8 @@ module.exports = {
       .then(() => {
         saveValkconfig();
         l.success(`Valkyrie ${vars.template.projectName} project successfully created:\n${JSON.stringify(valkconfig, null, 2)}`);
-        l.log(`${vars.apiName} is available at: ${l.colors.cyan}https://${valkconfig.Api.Id}.execute-api.eu-west-1.amazonaws.com/staging${l.colors.reset}`);
+        l.log(`${vars.apiName} is available at:`);
+        l.frame(`staging: ${joinUrl(`https://${valkconfig.Api.Id}.execute-api.eu-west-1.amazonaws.com/staging`, vars.root)}`, { prefix: false });
         resolve();
       })
       .catch(err => {
