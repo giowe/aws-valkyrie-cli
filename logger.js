@@ -1,6 +1,6 @@
 /* eslint-disable no-console */
 'use strict';
-const argv = require('./argv');
+const argv = require('simple-argv');
 
 const colors = {
   'reset': '\x1b[0m',
@@ -65,13 +65,13 @@ function log(color, ...args) {
   }).join(' ')}${colors.reset}`);
 }
 
-function frame(text, options) {
-  const border = repeat('─', text.length + 2);
-  const padding = repeat(' ', 6);
+function frame(text, options = { prefix: true }) {
+  const border = repeat('─', text.replace(/\u001b\[.*?m/g, '').length + 2);
+  const padding = options.prefix ? repeat(' ', 7) : '';
   console.log([
-    `${padding} ┌${border}┐`,
-    `${options.prefix ? prefix : padding } │ ${text} │`,
-    `${padding} └${border}┘`
+    `${padding}┌${border}┐`,
+    `${options.prefix ? `${prefix} ` : '' }│ ${text} │`,
+    `${padding}└${border}┘`
   ].join('\n'));
 }
 

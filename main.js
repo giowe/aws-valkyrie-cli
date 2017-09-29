@@ -4,7 +4,7 @@ const requireDir = require('require-dir');
 const request = require('request');
 const l = require('./logger');
 const pkg = require('./package.json');
-const argv = require('./argv');
+const argv = require('simple-argv');
 
 const nodeVersion = process.version;
 if (nodeVersion[1] < 8) {
@@ -17,7 +17,7 @@ if ((argv.version || argv.v) && !argv._.length) {
   request('https://registry.npmjs.org/aws-valkyrie-cli/latest', (err, res, body) => {
     if (body) {
       const latestVersion = JSON.parse(body).version;
-      if (latestVersion !== pkg.version) l.frame(`New version available: ${latestVersion}`);
+      if (latestVersion !== pkg.version) l.frame(`New version available: ${l.colors.yellow}${latestVersion}${l.colors.reset}`);
     }
     l.log(out.join('\n'));
   });

@@ -311,7 +311,7 @@ module.exports = {
         saveValkconfig();
         l.success(`Valkyrie ${vars.template.projectName} project successfully created:\n${JSON.stringify(valkconfig, null, 2)}`);
         l.log(`${vars.apiName} is available at:`);
-        l.frame(`staging: ${joinUrl(`https://${valkconfig.Api.Id}.execute-api.eu-west-1.amazonaws.com/staging`, vars.root)}`, { prefix: false });
+        l.frame(`staging: ${l.colors.cyan}${joinUrl(`https://${valkconfig.Api.Id}.execute-api.eu-west-1.amazonaws.com/staging`, vars.root)}${l.colors.reset}`, { prefix: false });
         resolve();
       })
       .catch(err => {

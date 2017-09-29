@@ -1,6 +1,6 @@
 {
   "name": "aws-valkyrie-cli",
-  "version": "0.5.0",
+  "version": "0.5.1",
   "description": "",
   "author": "Giovanni Bruno",
   "contributors": [
@@ -17,13 +17,14 @@
   "license": "ISC",
   "main": "main.js",
   "dependencies": {
-    "aws-cwlogs": "^2.4.0",
+    "aws-cwlogs": "^2.4.1",
     "aws-sdk": "^2.124.0",
     "del": "^3.0.0",
     "gulp": "^3.9.1",
     "inquirer": "^3.3.0",
     "request": "^2.83.0",
     "require-dir": "^0.3.2",
+    "simple-argv": "^1.0.0",
     "validate-npm-package-name": "^3.0.0",
     "valkyrie-scaffolder-default": "^1.1.0",
     "zip-dir": "^1.0.2"
