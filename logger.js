@@ -67,9 +67,9 @@ function inlineLog(color, ...args) {
 function frame(text) {
   const border = repeat('─', text.length + 2);
   const padding = repeat(' ', 7);
-  log([
-    `┌${border}┐`,
-    `${padding}│ ${text} │`,
+  console.log([
+    `${padding}┌${border}┐`,
+    `${prefix} │ ${text} │`,
     `${padding}└${border}┘`
   ].join('\n'));
 }

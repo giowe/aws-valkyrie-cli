@@ -6,6 +6,12 @@ const l = require('./logger');
 const pkg = require('./package.json');
 const argv = require('./argv');
 
+const nodeVersion = process.version;
+if (nodeVersion[1] < 8) {
+  l.frame(`node ${nodeVersion} found; aws-valkyrie-cli requires at least node 8; update your node version`);
+  process.exit();
+}
+
 if ((argv.version || argv.v) && !argv._.length) {
   const out = [`${pkg.name} ${pkg.version}`];
   request('https://registry.npmjs.org/aws-valkyrie-cli/latest', (err, res, body) => {
