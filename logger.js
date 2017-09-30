@@ -1,6 +1,7 @@
 /* eslint-disable no-console */
 'use strict';
 const argv = require('simple-argv');
+const { Spinner } = require('cli-spinner');
 
 const colors = {
   'reset': '\x1b[0m',
@@ -50,6 +51,7 @@ function repeat(text, len) {
 }
 
 function log(color, ...args) {
+  stopSpinner();
   const options = { prefix: true, inline: false };
   if (typeof args[args.length -1] === 'object') Object.assign(options, args.pop());
   args.unshift(color);
@@ -87,8 +89,18 @@ function success(...args) {
   log(`[${colors.green}SUCCESS${colors.reset}]`, ...args);
 }
 
+const spinner = new Spinner();
+spinner.setSpinnerString('⠋⠙⠹⠸⠼⠴⠦⠧⠇⠏');
 function wait(...args) {
-  log(`[${colors.white}WAIT${colors.reset}]`, ...args);
+  stopSpinner();
+  const options = { prefix: true };
+  if (typeof args[args.length -1] === 'object') Object.assign(options, args.pop());
+  spinner.text = `${options.prefix ? `${prefix} `: ''}[${colors.white}WAIT${colors.reset}] ${args.join(' ')} %s`;
+  spinner.start();
+}
+
+function stopSpinner() {
+  if (spinner.isSpinning()) spinner.stop(true);
 }
 
 module.exports = {

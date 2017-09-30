@@ -179,7 +179,7 @@ module.exports = {
 
       //INSTALLING PACKAGES
       .then(() => {
-        l.wait('installing npm packages...');
+        l.wait('installing npm packages');
         return exec(`npm install --prefix ${vars.projectFolder}`);
       })
       .then(() => {
@@ -190,7 +190,7 @@ module.exports = {
       //LAMBDA CREATION
       .then(() => zipdir(vars.projectFolder))
       .then(async (buffer) => {
-        l.wait('creating lambda function...', { inline: true });
+        l.wait('creating lambda function');
         vars.lambdaConfig = {
           FunctionName: `valkyrie-${vars.template.projectName}-lambda`,
           Description: vars.template.description,
@@ -206,12 +206,9 @@ module.exports = {
         const wait = () => new Promise(resolve => setTimeout(resolve, 1000));
         const createLambda = async (maxRetries = 10) => {
           try {
-            const result = await lambda.createFunction(params).promise();
-            l.log('\n', { prefix: false, inline: true });
-            return result;
+            return await lambda.createFunction(params).promise();
           } catch(err) {
             if (maxRetries > 0) {
-              l.log('.', { prefix: false, inline: true });
               await wait();
               return await createLambda(maxRetries -1);
             }
