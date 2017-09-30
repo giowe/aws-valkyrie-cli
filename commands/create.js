@@ -37,7 +37,7 @@ module.exports = {
           path: defaultTemplatePath
         } };
         return inquirer.prompt({
-          type: 'list', name: 'scaffolder', message: 'select a template to scaffold you project:', choices: [
+          type: 'list', name: 'scaffolder', message: 'select a template to scaffold your project:', choices: [
             defaultTemplateListName,
             ...fs.readdirSync(vars.npmGlobalPath).reduce((acc, module)=> {
               if (module.substr(0, templatesPrefix.length) === templatesPrefix) {
@@ -67,6 +67,7 @@ module.exports = {
             if (warnings) out.push(...warnings);
             return `${out.join(', ')};`;
           }) },
+          { type: 'checkbox', name: 'environments', message: 'select which environment you want to generate:', choices: [{ name: 'staging', checked: true }, { name: 'production', checked: true }], validate: (choices) => choices.length ? true : 'select at least one environment;' },
           { type: 'input', name: 'region', message: 'region name:', validate: notNullValidator, default: 'eu-west-1' },
           { type: 'input', name: 'description', message: 'description:' },
           { type: 'input', name: 'memorySize', message: 'lambda memory size:', validate: notNullValidator, default: '128' },
