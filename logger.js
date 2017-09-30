@@ -85,6 +85,10 @@ function error(err) {
   log(`[${colors.red}ERROR${colors.reset}]`, argv.debug ? `\n${err.stack}` : err.message);
 }
 
+function warning(err) {
+  log(`[${colors.yellow}WARNING${colors.reset}]`, argv.debug ? `\n${err.stack}` : err.message);
+}
+
 function success(...args) {
   log(`[${colors.green}SUCCESS${colors.reset}]`, ...args);
 }
@@ -111,6 +115,7 @@ module.exports = {
   log,
   fail,
   error,
+  warning,
   success,
   wait,
   colors

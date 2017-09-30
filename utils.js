@@ -65,3 +65,17 @@ e.breakChain = (data) => {
 };
 
 e.joinUrl = (...args) => args.filter(e => e).map(e => e.replace('/', '')).join('/');
+
+
+const wait = (time = 1000) => new Promise(resolve => setTimeout(resolve, time));
+e.generateRetryFn = (promiseFnWrapper) => async function retryFn(maxRetries = 10) {
+  try {
+    return await promiseFnWrapper();
+  } catch(err) {
+    if (maxRetries > 0) {
+      await wait();
+      return await retryFn(maxRetries -1);
+    }
+    else throw err;
+  }
+};

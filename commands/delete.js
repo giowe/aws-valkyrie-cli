@@ -1,7 +1,7 @@
 'use strict';
 
 const AWS = require('aws-sdk');
-const { getAWSCredentials, getProjectInfo, breakChain } = require('../utils');
+const { getAWSCredentials, getProjectInfo, breakChain, generateRetryFn } = require('../utils');
 const inquirer = require('inquirer');
 
 module.exports = {
@@ -12,12 +12,11 @@ module.exports = {
 
     const awsCredentials = { credentials: getAWSCredentials() };
     const { Region: region } = valkconfig.Project;
-    const { PolicyArn, RoleName } = valkconfig.Iam;
-    const { FunctionName } = valkconfig.Lambda;
-    const { Id: restApiId } = valkconfig.Api;
-
     const iam = new AWS.IAM(awsCredentials);
-
+    const lambda = new AWS.Lambda(Object.assign({ region }, awsCredentials));
+    const apiGateway = new AWS.APIGateway(Object.assign({ region }, awsCredentials));
+    const envNames = Object.keys(valkconfig.Environments);
+    const envValues = Object.values(valkconfig.Environments);
     (() => {
       if (!programmaticDeletion) {
         return inquirer.prompt([{ type: 'confirm', name: 'confirm', message: 'All AWS infrastructure related to this project will be deleted and it will be impossible to restore it, including roles and policies. Continue?', default: false }]).then(({ confirm }) => {
@@ -29,20 +28,33 @@ module.exports = {
       }
       else return Promise.resolve();
     })()
-      .then(() => { if (PolicyArn && RoleName) return iam.detachRolePolicy({ PolicyArn, RoleName }).promise(); })
-      .then(data => { if (data) l.success(`${PolicyArn} detached from ${RoleName};`); })
+      .then(() => Promise.all(envValues.map(({ Iam }) => { if (Iam && Iam.PolicyArn && Iam.RoleName) return iam.detachRolePolicy({ PolicyArn: Iam.PolicyArn, RoleName: Iam.RoleName }).promise(); })))
+      .then(results => results.forEach((data, i) => { if (data) l.success(`${envValues[i].Iam.PolicyArn} detached from ${envValues[i].Iam.RoleName};`); }))
+      .catch(l.warning)
 
-      .then(() => { if (PolicyArn) return iam.deletePolicy({ PolicyArn }).promise(); })
-      .then(data => { if (data) l.success(`${PolicyArn} policy deleted;`); })
+      .then(() => Promise.all(envValues.map(({ Iam }) => { if (Iam && Iam.PolicyArn) return iam.deletePolicy({ PolicyArn: Iam.PolicyArn }).promise(); })))
+      .then(results => results.forEach((data, i) => { if (data) l.success(`${envValues[i].Iam.PolicyArn} ${envNames[i]} policy deleted;`); }))
+      .catch(l.warning)
 
-      .then(() => { if (RoleName) return iam.deleteRole({ RoleName }).promise(); })
-      .then(data => { if (data) l.success(`${RoleName} role deleted;`); })
+      .then(() => Promise.all(envValues.map(({ Iam }) => { if (Iam && Iam.RoleName) return iam.deleteRole({ RoleName: Iam.RoleName }).promise(); })))
+      .then(results => results.forEach((data, i) => { if (data) l.success(`${envValues[i].Iam.RoleName} role deleted;`); }))
+      .catch(l.warning)
 
-      .then(() => { if (FunctionName) return new AWS.Lambda(Object.assign({ region }, awsCredentials)).deleteFunction({ FunctionName }).promise(); })
-      .then(data => { if (data) l.success(`${FunctionName} lambda deleted;`); })
+      .then(() => Promise.all(envValues.map(({ Lambda }) => { if (Lambda && Lambda.FunctionName) return lambda.deleteFunction({ FunctionName: Lambda.FunctionName }).promise(); })))
+      .then(results => results.forEach((data, i) => { if (data) l.success(`${envValues[i].Lambda.FunctionName} lambda deleted;`); }))
+      .catch(l.warning)
 
-      .then(() => { if (restApiId) return new AWS.APIGateway(Object.assign({ region }, awsCredentials)).deleteRestApi({ restApiId }).promise(); })
-      .then(data => { if (data) l.success(`${restApiId} API deleted`); })
+      .then(() => {
+        if (envValues.length && envValues[0].Api && envValues[0].Api.Id) l.wait(`deleting api${envValues.length > 1 ? 's' : ''}`);
+        return Promise.all(envValues.map(async ({ Api }) => {
+          if (Api && Api.Id) {
+            const deleteApi = generateRetryFn(() => apiGateway.deleteRestApi({ restApiId: Api.Id }).promise());
+            return await deleteApi();
+          }
+        }));
+      })
+      .then(results => results.forEach((data, i) => { if (data) l.success(`${envValues[i].Api.Id} ${envNames[i]} API deleted`); }))
+      .catch(l.warning)
 
       .then(() => l.success('deletion completed'))
       .then(resolve)
