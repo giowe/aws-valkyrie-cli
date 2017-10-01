@@ -53,10 +53,10 @@ module.exports = {
           }
         }));
       })
-      .then(results => results.forEach((data, i) => { if (data) l.success(`${envValues[i].Api.Id} ${envNames[i]} API deleted`); }))
+      .then(results => results.forEach((data, i) => { if (data) l.success(`${envValues[i].Api.Id} ${envNames[i]} API deleted;`); }))
       .catch(l.warning)
 
-      .then(() => l.success('deletion completed'))
+      .then(() => l.success('deletion completed;'))
       .then(resolve)
       .catch(err => {
         if (err.chainBraker) resolve();

@@ -57,7 +57,7 @@ module.exports = {
       .then(({ scaffolder }) => {
         vars.scaffolderPath = vars.scaffolders[scaffolder].path;
         const defaultInputs = [
-          { type: 'input', name: 'projectName', message: 'project name:', validate: (name => {
+          { type: 'input', name: 'projectName', message: 'project name:', default: argv._[1], validate: (name => {
             const { validForNewPackages, warnings, errors } = validate(name);
             if (validForNewPackages) return true;
             const out = [];
@@ -68,9 +68,9 @@ module.exports = {
           { type: 'checkbox', name: 'environments', message: 'select which environment you want to generate:', choices: [{ name: 'staging', checked: true }, { name: 'production', checked: true }], validate: (choices) => choices.length ? true : 'select at least one environment;' },
           { type: 'input', name: 'region', message: 'region name:', validate: notNullValidator, default: 'eu-west-1' },
           { type: 'input', name: 'description', message: 'description:' },
-          { type: 'input', name: 'memorySize', message: 'lambda memory size:', validate: notNullValidator, default: '128' },
-          { type: 'input', name: 'timeout', message: 'lambda timeout:', validate: notNullValidator, default: '3' },
-          { type: 'input', name: 'runtime', message: 'lambda runtime:', validate: notNullValidator, default: 'nodejs6.10' }
+          { type: 'input', name: 'memorySize', message: 'Lambda memory size:', validate: notNullValidator, default: '128' },
+          { type: 'input', name: 'timeout', message: 'Lambda timeout:', validate: notNullValidator, default: '3' },
+          { type: 'input', name: 'runtime', message: 'Lambda runtime:', validate: notNullValidator, default: 'nodejs6.10' }
         ];
         const { inputs: scaffolderInputs, source, handler, root } = require(vars.scaffolderPath);
         vars.scaffolderSourcePath = path.join(vars.scaffolderPath, source);
@@ -200,7 +200,7 @@ module.exports = {
       //LAMBDA CREATION
       .then(() => zipdir(vars.projectFolder))
       .then(buffer => {
-        l.wait(`creating lambda function${vars.template.environments.length > 1 ? 's' : ''}`);
+        l.wait(`creating Lambda function${vars.template.environments.length > 1 ? 's' : ''}`);
         const lambda = vars.lambda = new AWS.Lambda(Object.assign({ region: valkconfig.Project.Region }, awsCredentials));
         return Promise.all(vars.template.environments.map(async (env) => {
           vars[env].lambdaConfig = {
@@ -304,7 +304,7 @@ module.exports = {
         SourceArn: `arn:aws:execute-api:${valkconfig.Project.Region}:${valkconfig.Environments[env].Iam.PolicyArn.split(':')[4]}:${valkconfig.Environments[env].Api.Id}/*/*/*`,
         StatementId: 'ID-1'
       }).promise())))
-      .then(() => Promise.all(vars.template.environments.map(env => l.success(`permission granted to ${env} lambda to be called from api-gateway;`))))
+      .then(() => Promise.all(vars.template.environments.map(env => l.success(`permission granted to ${env} Lambda to be called from api-gateway;`))))
 
       //DEPLOYMENT CREATION
       .then(() => Promise.all(vars.template.environments.map(env => vars.apigateway.createDeployment({
@@ -315,8 +315,9 @@ module.exports = {
 
       .then(() => {
         saveValkconfig();
-        l.success(`Valkyrie ${vars.template.projectName} project successfully created:\n${JSON.stringify(valkconfig, null, 2)}`);
-        Promise.all(vars.template.environments.map(env => l.frame(`${env.toLowerCase()}: ${l.colors.cyan}${joinUrl(`https://${valkconfig.Environments[env].Api.Id}.execute-api.eu-west-1.amazonaws.com/${env.toLowerCase()}`, vars.root)}${l.colors.reset}`, { prefix: false })));
+        l.success(`valkconfig.json:\n${JSON.stringify(valkconfig, null, 2)}`);
+        l.success(`Valkyrie ${vars.template.projectName} project successfully created; the application is available at the following link${vars.template.environments.length > 1 ? 's' : ''}:`);
+        Promise.all(vars.template.environments.map(env => l.log(`- ${l.leftPad(`${env.toLowerCase()}:`, 11)} ${l.colors[env === 'staging' ? 'cyan' : 'magenta']}${joinUrl(`https://${valkconfig.Environments[env].Api.Id}.execute-api.eu-west-1.amazonaws.com/${env.toLowerCase()}`, vars.root)}${l.colors.reset}`, { prefix: false })));
         resolve();
       })
       .catch(err => {
