@@ -40,7 +40,7 @@ module.exports = {
           return inquirer.prompt([
             { type: 'list', name: 'env', message: 'select which environment you want to update:', choices: ['staging', 'production'], default: 0 }
           ]);
-        } else return availableEnv[0].toLowerCase();
+        } else return { env: availableEnv[0].toLowerCase() };
       })
       .then(answers => Object.assign(vars, answers))
       .then(() => {
