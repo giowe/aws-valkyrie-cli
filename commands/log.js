@@ -5,11 +5,11 @@ const argv = require('simple-argv');
 const CwLogs = require('aws-cwlogs');
 
 module.exports = {
-  description: 'Show real-time Valkyrie application logs',
+  description: 'Streams real-time application logs from AWS CloudWatch Logs',
   flags: [{
     name: 'stream',
     short: 's',
-    description: 'Specify a CloudWatch Logs stream, latest by default;'
+    description: 'AWS CloudWatch Logs stream, latest by default;'
   }],
   fn: ({ l }) => new Promise((resolve, reject) => {
     const { valkconfig } = getProjectInfo();

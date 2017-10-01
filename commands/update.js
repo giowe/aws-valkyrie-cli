@@ -7,7 +7,7 @@ const { getProjectInfo, getAWSCredentials, getRequiredEnv, breakChain, getEnvCol
 const AWS = require('aws-sdk');
 
 module.exports = {
-  description: 'Updates ',
+  description: 'Updates you function code and/or configurations;',
   flags: [
     {
       name: 'staging',
