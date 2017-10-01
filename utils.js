@@ -3,6 +3,8 @@ const fs = require('fs');
 const os = require('os');
 const path = require('path');
 const AWS = require('aws-sdk');
+const argv = require('simple-argv');
+const inquirer = require('inquirer');
 const e = module.exports = {};
 
 e.listFiles = (rootPath, onFile, onFolder) => new Promise((resolve) => {
@@ -79,3 +81,17 @@ e.generateRetryFn = (promiseFnWrapper) => async function retryFn(maxRetries = 10
     else throw err;
   }
 };
+
+e.getRequiredEnv = (valkconfig) => new Promise(resolve => {
+  const availableEnv = Object.keys(valkconfig.Environments);
+  if (availableEnv.length === 0) throw new Error('no environment found in valkconfig.json');
+  else if (availableEnv.length > 1) {
+    if (argv.staging) return resolve ({ env: 'staging' });
+    else if (argv.production) return resolve({ env: 'production' });
+    return resolve(inquirer.prompt([
+      { type: 'list', name: 'env', message: 'select the environment:', choices: ['staging', 'production'], default: 0 }
+    ]));
+  } else return resolve({ env: availableEnv[0].toLowerCase() });
+});
+
+e.getEnvColor = (env) => env === 'staging' ? 'cyan' : 'magenta';

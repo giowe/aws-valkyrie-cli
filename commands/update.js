@@ -2,8 +2,8 @@
 const { promisify } = require('util');
 const zipdir = promisify(require('zip-dir'));
 const inquirer = require('inquirer');
-const { getProjectInfo, getAWSCredentials, breakChain } = require('../utils');
-
+const argv = require('simple-argv');
+const { getProjectInfo, getAWSCredentials, getRequiredEnv, breakChain, getEnvColor } = require('../utils');
 const AWS = require('aws-sdk');
 
 module.exports = {
@@ -26,22 +26,12 @@ module.exports = {
       description: 'Updates just the configuration;'
     }
   ],
-  fn: ({ l, argv }) => new Promise((resolve, reject) => {
+  fn: ({ l }) => new Promise((resolve, reject) => {
     const { valkconfig, root } = getProjectInfo();
 
     const vars = {};
     Promise.resolve()
-      .then(() => {
-        const availableEnv = Object.keys(valkconfig.Environments);
-        if (availableEnv.length === 0) throw new Error('no environment found in valkconfig.json');
-        else if (availableEnv.length > 1) {
-          if (argv.staging) return { env: 'staging' };
-          else if (argv.production) return { env: 'production' };
-          return inquirer.prompt([
-            { type: 'list', name: 'env', message: 'select which environment you want to update:', choices: ['staging', 'production'], default: 0 }
-          ]);
-        } else return { env: availableEnv[0].toLowerCase() };
-      })
+      .then(() => getRequiredEnv(valkconfig))
       .then(answers => Object.assign(vars, answers))
       .then(() => {
         if (!argv.code && !argv.config) {
@@ -53,7 +43,7 @@ module.exports = {
       .then(answers => Object.assign(vars, answers))
       .then(() => {
         if (vars.env === 'production') return inquirer.prompt([{
-          type: 'confirm', name: 'confirm', message: `you are about to update Lambda ${vars.update.join(' and ')} in ${l.colors.magenta}production${l.colors.white}. Continue?`, default: false
+          type: 'confirm', name: 'confirm', message: `you are about to update Lambda ${vars.update.join(' and ')} in ${l.colors[getEnvColor('production')]}production${l.colors.white}. Continue?`, default: false
         }]);
         return { confirm: true };
       })
@@ -61,7 +51,7 @@ module.exports = {
       .then(() => {
         const promises = [];
         const lambda = new AWS.Lambda(Object.assign({ region: valkconfig.Project.Region }, { credentials: getAWSCredentials() }));
-        const envColor = vars.envColor = l.colors[vars.env === 'staging' ? 'cyan' : 'magenta'];
+        const envColor = vars.envColor = getEnvColor(vars.env);
         const { env, update } = vars;
 
         l.wait(`updating ${envColor}${env}${l.colors.reset} Lambda ${update.join(' and ')}...`);

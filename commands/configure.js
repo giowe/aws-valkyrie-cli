@@ -1,6 +1,7 @@
 'use strict';
 
 const inquirer = require('inquirer');
+const argv = require('simple-argv');
 const { getGlobalConfig, saveGlobalConfig } = require('../utils');
 
 module.exports = {
@@ -10,7 +11,7 @@ module.exports = {
     short: 'e',
     description: 'Edit global .valkconfig file with you default editor;'
   }],
-  fn: ({ argv }) => new Promise((resolve, reject) => {
+  fn: () => new Promise((resolve, reject) => {
     const config = getGlobalConfig();
 
     if (argv.edit || argv.e) {
