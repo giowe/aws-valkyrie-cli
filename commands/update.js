@@ -51,7 +51,7 @@ module.exports = {
       .then(() => {
         const promises = [];
         const lambda = new AWS.Lambda(Object.assign({ region: valkconfig.Project.Region }, { credentials: getAWSCredentials() }));
-        const envColor = vars.envColor = getEnvColor(vars.env);
+        const envColor = vars.envColor = l.colors[getEnvColor(vars.env)];
         const { env, update } = vars;
 
         l.wait(`updating ${envColor}${env}${l.colors.reset} Lambda ${update.join(' and ')}...`);
