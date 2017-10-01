@@ -13,13 +13,14 @@ if (nodeVersion[1] < 8) {
 }
 
 if ((argv.version || argv.v) && !argv._.length) {
-  const out = [`${pkg.name} ${pkg.version}`];
+  l.log(`${pkg.name} ${pkg.version}`);
+  l.wait('checking for updates');
   request('https://registry.npmjs.org/aws-valkyrie-cli/latest', (err, res, body) => {
     if (body) {
       const latestVersion = JSON.parse(body).version;
-      if (latestVersion !== pkg.version) l.frame(`New version available: ${l.colors.yellow}${latestVersion}${l.colors.reset}`);
+      if (latestVersion !== pkg.version) l.frame(`new version available: ${l.colors.yellow}${latestVersion}${l.colors.reset}`);
+      else l.log('you are currently using the latest version;');
     }
-    l.log(out.join('\n'));
   });
 } else {
   const commands = requireDir(path.join(__dirname, 'commands'));
