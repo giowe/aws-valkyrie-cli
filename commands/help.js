@@ -1,7 +1,7 @@
 'use strict';
 
 module.exports = {
-  description: 'Shows all commands info',
+  description: 'Shows all commands info;',
   fn: ({ l, commands }) => new Promise((resolve) => {
     l.log('Help:');
     l.log([

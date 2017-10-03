@@ -94,4 +94,6 @@ e.getRequiredEnv = (valkconfig) => new Promise(resolve => {
   } else return resolve({ env: availableEnv[0].toLowerCase() });
 });
 
-e.getEnvColor = (env) => env === 'staging' ? 'cyan' : 'magenta';
+e.getEnvColor = (env) => env.toLowerCase() === 'staging' ? 'cyan' : 'magenta';
+
+e.getApiUrl = (valkconfig, env) => `https://${valkconfig.Environments[env].Api.Id}.execute-api.${valkconfig.Project.Region}.amazonaws.com/${env.toLowerCase()}`;

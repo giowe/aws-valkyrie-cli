@@ -43,7 +43,7 @@ module.exports = {
       .then(answers => Object.assign(vars, answers))
       .then(() => {
         if (vars.env === 'production') return inquirer.prompt([{
-          type: 'confirm', name: 'confirm', message: `you are about to update Lambda ${vars.update.join(' and ')} in ${l.colors[getEnvColor('production')]}production${l.colors.white}. Continue?`, default: false
+          type: 'confirm', name: 'confirm', message: `you are about to update Lambda ${vars.update.join(' and ')} in ${l.colors[getEnvColor('production')]}production${l.colors.reset}. Continue?`, default: false
         }]);
         return { confirm: true };
       })

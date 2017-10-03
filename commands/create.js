@@ -9,11 +9,11 @@ const zipdir = promisify(require('zip-dir'));
 const path = require('path');
 const fs = require('fs');
 const argv = require('simple-argv');
-const { getAWSCredentials, listFiles, subPath, joinUrl, generateRetryFn, getEnvColor } = require('../utils');
+const { getAWSCredentials, listFiles, subPath, joinUrl, generateRetryFn, getEnvColor, getApiUrl } = require('../utils');
 const cwd = process.cwd();
 
 module.exports = {
-  description: 'Create a new Valkyrie application',
+  description: 'Create a new Valkyrie application;',
   fn: ({ l, commands }) => new Promise((resolve, reject) => {
     const vars = { };
     const valkconfig = {
@@ -318,7 +318,7 @@ module.exports = {
         saveValkconfig();
         l.success(`valkconfig.json:\n${JSON.stringify(valkconfig, null, 2)}`);
         l.success(`Valkyrie ${vars.template.projectName} project successfully created; the application is available at the following link${vars.template.environments.length > 1 ? 's' : ''}:`);
-        Promise.all(vars.template.environments.map(env => l.log(`- ${l.leftPad(`${env.toLowerCase()}:`, 11)} ${l.colors[getEnvColor(env)]}${joinUrl(`https://${valkconfig.Environments[env].Api.Id}.execute-api.eu-west-1.amazonaws.com/${env.toLowerCase()}`, vars.root)}${l.colors.reset}`, { prefix: false })));
+        Promise.all(vars.template.environments.map(env => l.log(`- ${l.leftPad(`${env.toLowerCase()}:`, 11)} ${l.colors[getEnvColor(env)]}${joinUrl(getApiUrl(valkconfig, env), vars.root)}${l.colors.reset}`, { prefix: false })));
         resolve();
       })
       .catch(err => {

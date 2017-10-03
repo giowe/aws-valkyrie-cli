@@ -5,7 +5,7 @@ const argv = require('simple-argv');
 const CwLogs = require('aws-cwlogs');
 
 module.exports = {
-  description: 'Streams real-time application logs from AWS CloudWatch Logs',
+  description: 'Streams real-time application logs from AWS CloudWatch Logs;',
   flags: [{
     name: 'stream',
     short: 's',

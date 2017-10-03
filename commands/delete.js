@@ -5,7 +5,7 @@ const { getAWSCredentials, getProjectInfo, breakChain, generateRetryFn } = requi
 const inquirer = require('inquirer');
 
 module.exports = {
-  description: 'Delete an existing Valkyrie application',
+  description: 'Delete an existing Valkyrie application;',
   fn: ({ l }, valkconfig = null) => new Promise((resolve, reject) => {
     const programmaticDeletion = valkconfig !== null;
     if (!valkconfig) valkconfig = getProjectInfo().valkconfig;

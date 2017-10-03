@@ -5,7 +5,7 @@ const argv = require('simple-argv');
 const { getGlobalConfig, saveGlobalConfig } = require('../utils');
 
 module.exports = {
-  description: 'Configure your aws credentials',
+  description: 'Configure your aws credentials;',
   flags: [{
     name: 'edit',
     short: 'e',
