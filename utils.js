@@ -5,6 +5,8 @@ const path = require('path');
 const AWS = require('aws-sdk');
 const argv = require('simple-argv');
 const inquirer = require('inquirer');
+const { promisify } = require('util');
+const zipdir = promisify(require('zip-dir'));
 const e = module.exports = {};
 
 e.listFiles = (rootPath, onFile, onFolder) => new Promise((resolve) => {
@@ -97,3 +99,12 @@ e.getRequiredEnv = (valkconfig) => new Promise(resolve => {
 e.getEnvColor = (env) => env.toLowerCase() === 'staging' ? 'cyan' : 'magenta';
 
 e.getApiUrl = (valkconfig, env) => `https://${valkconfig.Environments[env].Api.Id}.execute-api.${valkconfig.Project.Region}.amazonaws.com/${env.toLowerCase()}`;
+
+e.createDistZip = (projectFolder) => new Promise((resolve, reject) => {
+  let valkignore;
+  try {
+    valkignore = [fs.readFileSync(path.join(projectFolder, '.valkignore')).split('\n')];
+  } catch(ignore) {}
+
+  console.log(valkignore)
+});
