@@ -5,8 +5,8 @@ const path = require('path');
 const AWS = require('aws-sdk');
 const argv = require('simple-argv');
 const inquirer = require('inquirer');
-const { promisify } = require('util');
-const { spawn } = require('child_process');
+const {promisify} = require('util');
+const {spawn} = require('child_process');
 const zipdir = promisify(require('zip-dir'));
 const e = module.exports = {};
 
@@ -89,12 +89,12 @@ e.getRequiredEnv = (valkconfig) => new Promise(resolve => {
   const availableEnv = Object.keys(valkconfig.Environments);
   if (availableEnv.length === 0) throw new Error('no environment found in valkconfig.json');
   else if (availableEnv.length > 1) {
-    if (argv.staging) return resolve ({ env: 'staging' });
-    else if (argv.production) return resolve({ env: 'production' });
+    if (argv.staging) return resolve ({env: 'staging'});
+    else if (argv.production) return resolve({env: 'production'});
     return resolve(inquirer.prompt([
-      { type: 'list', name: 'env', message: 'select the environment:', choices: ['staging', 'production'], default: 0 }
+      {type: 'list', name: 'env', message: 'select the environment:', choices: ['staging', 'production'], default: 0}
     ]));
-  } else return resolve({ env: availableEnv[0].toLowerCase() });
+  } else return resolve({env: availableEnv[0].toLowerCase()});
 });
 
 e.getEnvColor = (env) => env.toLowerCase() === 'staging' ? 'cyan' : 'magenta';
@@ -110,7 +110,7 @@ e.createDistZip = (projectFolder) => new Promise((resolve, reject) => {
   //const { dependencies } = require(path.join(projectFolder, 'package.json'));
 
   e.lsDependencies()
-    .then(({ dependencies }) => {
+    .then(({dependencies}) => {
       const dig = (dep, modules = {}) => {
         Object.entries(dep).forEach(([ name, details ]) => {
           modules[name] = true;

@@ -11,10 +11,10 @@ module.exports = {
     short: 's',
     description: 'AWS CloudWatch Logs stream, latest by default;'
   }],
-  fn: ({ l }) => new Promise((resolve, reject) => {
-    const { valkconfig } = getProjectInfo();
+  fn: ({l}) => new Promise((resolve, reject) => {
+    const {valkconfig} = getProjectInfo();
     getRequiredEnv(valkconfig)
-      .then(({ env }) => {
+      .then(({env}) => {
         const logGroupName = `/aws/lambda/${valkconfig.Environments[env].Lambda.FunctionName}`;
         l.log(`streaming from ${l.colors[getEnvColor(env)]}${logGroupName}${l.colors.reset}:\n`);
 

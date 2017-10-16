@@ -2,25 +2,25 @@
 const inquirer = require('inquirer');
 const AWS = require('aws-sdk');
 const del = require('del');
-const { promisify } = require('util');
+const {promisify} = require('util');
 const validate = require('validate-npm-package-name');
 const exec = promisify(require('child_process').exec);
 const zipdir = promisify(require('zip-dir'));
 const path = require('path');
 const fs = require('fs');
 const argv = require('simple-argv');
-const { getAWSCredentials, listFiles, subPath, joinUrl, generateRetryFn, getEnvColor, getApiUrl } = require('../utils');
+const {getAWSCredentials, listFiles, subPath, joinUrl, generateRetryFn, getEnvColor, getApiUrl} = require('../utils');
 const cwd = process.cwd();
 
 module.exports = {
   description: 'Create a new Valkyrie application;',
-  fn: ({ l, commands }) => new Promise((resolve, reject) => {
+  fn: ({l, commands}) => new Promise((resolve, reject) => {
     const vars = { };
     const valkconfig = {
       Project: {},
       Environments: {}
     };
-    const awsCredentials = { credentials: getAWSCredentials() };
+    const awsCredentials = {credentials: getAWSCredentials()};
     const notNullValidator = (val) => val === '' ? 'required field;' : true;
     const templatesPrefix = 'valkyrie-scaffolder-';
     const defaultTemplatePath = path.join(__dirname, '..', 'node_modules', 'valkyrie-scaffolder-default');
@@ -29,12 +29,12 @@ module.exports = {
 
     //SCAFFOLDER SELECTION
     exec('npm root -g')
-      .then(({ stdout }) => {
+      .then(({stdout}) => {
         vars.npmGlobalPath = stdout.replace('\n', '');
-        vars.scaffolders = { [defaultTemplateListName] : {
+        vars.scaffolders = {[defaultTemplateListName] : {
           name: 'valkyrie-scaffolder-default',
           path: defaultTemplatePath
-        } };
+        }};
         return inquirer.prompt({
           type: 'list', name: 'scaffolder', message: 'select a template to scaffold your project:', choices: [
             defaultTemplateListName,
@@ -55,32 +55,32 @@ module.exports = {
       })
 
       //TEMPLATE VARIABLES INPUT
-      .then(({ scaffolder }) => {
+      .then(({scaffolder}) => {
         vars.scaffolderPath = vars.scaffolders[scaffolder].path;
         const defaultInputs = [
-          { type: 'input', name: 'projectName', message: 'project name:', default: argv._[1], validate: (name => {
-            const { validForNewPackages, warnings, errors } = validate(name);
+          {type: 'input', name: 'projectName', message: 'project name:', default: argv._[1], validate: (name => {
+            const {validForNewPackages, warnings, errors} = validate(name);
             if (validForNewPackages) return true;
             const out = [];
             if (errors) out.push(...errors);
             if (warnings) out.push(...warnings);
             return `${out.join(', ')};`;
-          }) },
-          { type: 'checkbox', name: 'environments', message: 'select which environment you want to generate:', choices: [{ name: 'staging', checked: true }, { name: 'production', checked: true }], validate: (choices) => choices.length ? true : 'select at least one environment;' },
-          { type: 'input', name: 'region', message: 'region name:', validate: notNullValidator, default: 'eu-west-1' },
-          { type: 'input', name: 'description', message: 'description:' },
-          { type: 'input', name: 'memorySize', message: 'Lambda memory size:', validate: notNullValidator, default: '128' },
-          { type: 'input', name: 'timeout', message: 'Lambda timeout:', validate: notNullValidator, default: '3' },
-          { type: 'input', name: 'runtime', message: 'Lambda runtime:', validate: notNullValidator, default: 'nodejs6.10' }
+          })},
+          {type: 'checkbox', name: 'environments', message: 'select which environment you want to generate:', choices: [{name: 'staging', checked: true}, {name: 'production', checked: true}], validate: (choices) => choices.length ? true : 'select at least one environment;'},
+          {type: 'input', name: 'region', message: 'region name:', validate: notNullValidator, default: 'eu-west-1'},
+          {type: 'input', name: 'description', message: 'description:'},
+          {type: 'input', name: 'memorySize', message: 'Lambda memory size:', validate: notNullValidator, default: '128'},
+          {type: 'input', name: 'timeout', message: 'Lambda timeout:', validate: notNullValidator, default: '3'},
+          {type: 'input', name: 'runtime', message: 'Lambda runtime:', validate: notNullValidator, default: 'nodejs6.10'}
         ];
-        const { inputs: scaffolderInputs, source, handler, root } = require(vars.scaffolderPath);
+        const {inputs: scaffolderInputs, source, handler, root} = require(vars.scaffolderPath);
         vars.scaffolderSourcePath = path.join(vars.scaffolderPath, source);
         vars.handler = handler;
         vars.root = root;
         const l = defaultInputs.length;
         return inquirer.prompt([
           ...defaultInputs,
-          ...scaffolderInputs.filter(({ name }) => {
+          ...scaffolderInputs.filter(({name}) => {
             for (let i = 0; i < l; i++) if (defaultInputs[i].name === name) return false;
             return true;
           })
@@ -125,7 +125,7 @@ module.exports = {
         }).promise()));
       })
       .then(results => {
-        results.forEach(({ Role: { RoleName: roleName, Arn: roleArn } }, i) => {
+        results.forEach(({Role: {RoleName: roleName, Arn: roleArn}}, i) => {
           const env = vars.template.environments[i];
           valkconfig.Environments[env].Iam.RoleName = roleName;
           vars[env].roleArn = roleArn;
@@ -155,7 +155,7 @@ module.exports = {
         Path: `/valkyrie/${env}/`
       }).promise())))
       .then(results =>  {
-        results.forEach(({ Policy: { PolicyName: policyName, Arn: policyArn } }, i) => {
+        results.forEach(({Policy: {PolicyName: policyName, Arn: policyArn}}, i) => {
           const env = vars.template.environments[i];
           valkconfig.Environments[env].Iam.PolicyArn = policyArn;
           vars[env].policyName = policyName;
@@ -194,7 +194,7 @@ module.exports = {
         return exec(`npm install --prefix ${vars.projectFolder}`);
       })
       .then(() => {
-        del.sync(path.join(vars.projectFolder, 'etc'), { force: true });
+        del.sync(path.join(vars.projectFolder, 'etc'), {force: true});
         l.success('project packages installed;');
       })
 
@@ -202,7 +202,7 @@ module.exports = {
       .then(() => zipdir(vars.projectFolder))
       .then(buffer => {
         l.wait(`creating Lambda function${vars.template.environments.length > 1 ? 's' : ''}`);
-        const lambda = vars.lambda = new AWS.Lambda(Object.assign({ region: valkconfig.Project.Region }, awsCredentials));
+        const lambda = vars.lambda = new AWS.Lambda(Object.assign({region: valkconfig.Project.Region}, awsCredentials));
         return Promise.all(vars.template.environments.map(async (env) => {
           vars[env].lambdaConfig = {
             FunctionName: `valkyrie-${vars.template.projectName}-${env}-lambda`,
@@ -213,11 +213,11 @@ module.exports = {
             Runtime: vars.template.runtime,
             Role: vars[env].roleArn
           };
-          const createLambda = generateRetryFn(() => lambda.createFunction(Object.assign({ Code: { ZipFile: buffer } }, vars[env].lambdaConfig)).promise());
+          const createLambda = generateRetryFn(() => lambda.createFunction(Object.assign({Code: {ZipFile: buffer}}, vars[env].lambdaConfig)).promise());
           return await createLambda();
         }));
       })
-      .then(results => results.forEach(({ FunctionName, FunctionArn }, i) => {
+      .then(results => results.forEach(({FunctionName, FunctionArn}, i) => {
         const env = vars.template.environments[i];
         vars[env].FunctionArn = FunctionArn;
         valkconfig.Environments[env].Lambda = vars[env].lambdaConfig;
@@ -226,7 +226,7 @@ module.exports = {
 
       //API CREATION
       .then(() => {
-        vars.apigateway = new AWS.APIGateway(Object.assign({ region: valkconfig.Project.Region }, awsCredentials));
+        vars.apigateway = new AWS.APIGateway(Object.assign({region: valkconfig.Project.Region}, awsCredentials));
         return Promise.all(vars.template.environments.map(env => {
           vars[env].apiName = `valkyrie-${vars.template.projectName}-${env}-api`;
           return vars.apigateway.createRestApi({
@@ -236,7 +236,7 @@ module.exports = {
         }));
       })
       .then(results => {
-        results.forEach(({ id: restApiId }, i) => {
+        results.forEach(({id: restApiId}, i) => {
           const env = vars.template.environments[i];
           valkconfig.Environments[env].Api.Id = restApiId;
           l.success(`${vars.template.projectName} ${env} API (id: ${restApiId}) created in ${valkconfig.Project.Region};`);
@@ -245,8 +245,8 @@ module.exports = {
       })
 
       //RESOURCE CREATION
-      .then(() => Promise.all(vars.template.environments.map(env => vars.apigateway.getResources({ restApiId: valkconfig.Environments[env].Api.Id }).promise())))
-      .then(results => Promise.all(results.map(({ items: [{ id: parentId }] }, i) => {
+      .then(() => Promise.all(vars.template.environments.map(env => vars.apigateway.getResources({restApiId: valkconfig.Environments[env].Api.Id}).promise())))
+      .then(results => Promise.all(results.map(({items: [{id: parentId}]}, i) => {
         const env = vars.template.environments[i];
         return vars.apigateway.createResource({
           restApiId: valkconfig.Environments[env].Api.Id,
@@ -254,7 +254,7 @@ module.exports = {
           pathPart: '{proxy+}'
         }).promise();
       })))
-      .then(results => results.forEach(({ id: resourceId }, i) => {
+      .then(results => results.forEach(({id: resourceId}, i) => {
         const env = vars.template.environments[i];
         vars[env].resourceId = resourceId;
         l.success(`{proxy+} ${env} resource (id: ${resourceId}) created;`);
@@ -266,7 +266,7 @@ module.exports = {
         httpMethod: 'ANY',
         resourceId: vars[env].resourceId,
         restApiId: valkconfig.Environments[env].Api.Id,
-        requestParameters: { 'method.request.path.proxy': true },
+        requestParameters: {'method.request.path.proxy': true},
         apiKeyRequired: false,
         operationName: 'Valkyrie proxy'
       }).promise())))
@@ -282,7 +282,7 @@ module.exports = {
         integrationHttpMethod: 'POST',
         contentHandling: 'CONVERT_TO_TEXT',
         passthroughBehavior: 'WHEN_NO_MATCH',
-        requestParameters: { 'integration.request.path.proxy': 'method.request.path.proxy' },
+        requestParameters: {'integration.request.path.proxy': 'method.request.path.proxy'},
         uri: `arn:aws:apigateway:${valkconfig.Project.Region}:lambda:path/2015-03-31/functions/${vars[env].FunctionArn}/invocations`
       }).promise())))
       .then(() => Promise.all(vars.template.environments.map(env => l.success(`${valkconfig.Environments[env].Lambda.FunctionName} attached to ${vars[env].apiName};`))))
@@ -293,7 +293,7 @@ module.exports = {
         resourceId: vars[env].resourceId,
         restApiId: valkconfig.Environments[env].Api.Id,
         statusCode: '200',
-        responseTemplates: { 'application/json': '{}' }
+        responseTemplates: {'application/json': '{}'}
       }).promise())))
       .then(() => Promise.all(vars.template.environments.map(env => l.success(`${env} api response integrated;`))))
 
@@ -318,7 +318,7 @@ module.exports = {
         saveValkconfig();
         l.success(`valkconfig.json:\n${JSON.stringify(valkconfig, null, 2)}`);
         l.success(`Valkyrie ${vars.template.projectName} project successfully created; the application is available at the following link${vars.template.environments.length > 1 ? 's' : ''}:`);
-        Promise.all(vars.template.environments.map(env => l.log(`- ${l.leftPad(`${env.toLowerCase()}:`, 11)} ${l.colors[getEnvColor(env)]}${joinUrl(getApiUrl(valkconfig, env), vars.root)}${l.colors.reset}`, { prefix: false })));
+        Promise.all(vars.template.environments.map(env => l.log(`- ${l.leftPad(`${env.toLowerCase()}:`, 11)} ${l.colors[getEnvColor(env)]}${joinUrl(getApiUrl(valkconfig, env), vars.root)}${l.colors.reset}`, {prefix: false})));
         resolve();
       })
       .catch(err => {
@@ -326,7 +326,7 @@ module.exports = {
         l.error(err);
         if (!argv['no-revert']) {
           l.log('reverting modifications...');
-          return commands.delete.fn({ l, argv, commands }, valkconfig);
+          return commands.delete.fn({l, argv, commands}, valkconfig);
         }
       })
       .then(resolve)

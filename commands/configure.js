@@ -2,7 +2,7 @@
 
 const inquirer = require('inquirer');
 const argv = require('simple-argv');
-const { getGlobalConfig, saveGlobalConfig } = require('../utils');
+const {getGlobalConfig, saveGlobalConfig} = require('../utils');
 
 module.exports = {
   description: 'Configure your aws credentials;',
@@ -15,8 +15,8 @@ module.exports = {
     const config = getGlobalConfig();
 
     if (argv.edit || argv.e) {
-      inquirer.prompt([{ type: 'editor', name: 'config', message: '.valkconfig', default: JSON.stringify(config, null, 2) }])
-        .then(({ config }) => {
+      inquirer.prompt([{type: 'editor', name: 'config', message: '.valkconfig', default: JSON.stringify(config, null, 2)}])
+        .then(({config}) => {
           saveGlobalConfig(config);
         })
         .then(resolve)
@@ -24,10 +24,10 @@ module.exports = {
     } else {
       const obfuscate = (str) => typeof str === 'string' ? str.split('').map((char, i) => i < str.length - 4 ? '*' : char).join('') : '';
       inquirer.prompt([
-        { type: 'input', name: 'accessKeyId', message: `AWS Access Key ID [${obfuscate(config.accessKeyId)}]:` },
-        { type: 'input', name: 'secretAccessKey', message: `AWS Secret Access Key [${obfuscate(config.secretAccessKey)}]:` }
+        {type: 'input', name: 'accessKeyId', message: `AWS Access Key ID [${obfuscate(config.accessKeyId)}]:`},
+        {type: 'input', name: 'secretAccessKey', message: `AWS Secret Access Key [${obfuscate(config.secretAccessKey)}]:`}
       ])
-        .then(({ accessKeyId, secretAccessKey }) => {
+        .then(({accessKeyId, secretAccessKey}) => {
           if (accessKeyId) config.accessKeyId = accessKeyId;
           if (secretAccessKey) config.secretAccessKey = secretAccessKey;
 

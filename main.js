@@ -25,7 +25,7 @@ if ((argv.version || argv.v) && !argv._.length) {
 } else {
   const commands = requireDir(path.join(__dirname, 'commands'));
   const command = commands[argv._[0]];
-  if (argv.help) commands['help'].fn({ l, commands: command ? { [argv._[0]]: command } : commands }).catch((...errors) => errors.forEach(l.error));
-  else if (command) command.fn({ l, commands }).catch((...errors) => errors.forEach(l.error));
+  if (argv.help) commands['help'].fn({l, commands: command ? {[argv._[0]]: command} : commands}).catch((...errors) => errors.forEach(l.error));
+  else if (command) command.fn({l, commands}).catch((...errors) => errors.forEach(l.error));
   else l.log(`command not found, run ${l.colors.cyan}valk help${l.colors.reset} to list all commands;`);
 }
