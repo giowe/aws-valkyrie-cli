@@ -108,7 +108,7 @@ module.exports = {
       .then(() => {
         vars.iam = new AWS.IAM(awsCredentials);
         l.wait(`creating role${vars.plural? 's' : ''}`);
-        return Promise.all(vars.template.environments.map(async env => await generateRetryFn(() => vars.iam.createRole({
+        return Promise.all(vars.template.environments.map(env => generateRetryFn(() => vars.iam.createRole({
           AssumeRolePolicyDocument: JSON.stringify({
             Version: '2012-10-17',
             Statement: [
@@ -139,7 +139,7 @@ module.exports = {
       //POLICY CREATION
       .then(() => {
         l.wait(`creating polic${vars.plural? 'ies' : 'y'}`);
-        return Promise.all(vars.template.environments.map(async env => await generateRetryFn(() => vars.iam.createPolicy({
+        return Promise.all(vars.template.environments.map(env => generateRetryFn(() => vars.iam.createPolicy({
           PolicyDocument: JSON.stringify({
             Version: '2012-10-17',
             Statement: [
@@ -172,7 +172,7 @@ module.exports = {
       //ATTACHING POLICY TO ROLE
       .then(() => {
         l.wait(`attaching polic${vars.plural? 'ies' : 'y'} to role${vars.plural ? 's' : ''}`);
-        Promise.all(vars.template.environments.map(async env => await generateRetryFn(() => vars.iam.attachRolePolicy({
+        Promise.all(vars.template.environments.map(env => generateRetryFn(() => vars.iam.attachRolePolicy({
           PolicyArn: valkconfig.Environments[env].Iam.PolicyArn,
           RoleName: valkconfig.Environments[env].Iam.RoleName
         }).promise())()));
@@ -211,7 +211,7 @@ module.exports = {
       .then(buffer => {
         l.wait(`creating Lambda function${vars.plural? 's' : ''}`);
         const lambda = vars.lambda = new AWS.Lambda(Object.assign({region: valkconfig.Project.Region}, awsCredentials));
-        return Promise.all(vars.template.environments.map(async env => {
+        return Promise.all(vars.template.environments.map(env => {
           vars[env].lambdaConfig = {
             FunctionName: `valkyrie-${vars.template.projectName}-${env}-lambda`,
             Description: vars.template.description,
@@ -221,7 +221,7 @@ module.exports = {
             Runtime: vars.template.runtime,
             Role: vars[env].roleArn
           };
-          return await generateRetryFn(() => lambda.createFunction(Object.assign({Code: {ZipFile: buffer}}, vars[env].lambdaConfig)).promise(), 10)();
+          return generateRetryFn(() => lambda.createFunction(Object.assign({Code: {ZipFile: buffer}}, vars[env].lambdaConfig)).promise(), 10)();
         }));
       })
       .then(results => results.forEach(({FunctionName, FunctionArn}, i) => {
@@ -235,9 +235,9 @@ module.exports = {
       .then(() => {
         vars.apigateway = new AWS.APIGateway(Object.assign({region: valkconfig.Project.Region}, awsCredentials));
         l.wait(`creating api gateway infrastructure${vars.plural? 's' : ''}`);
-        return Promise.all(vars.template.environments.map(async env => {
+        return Promise.all(vars.template.environments.map(env => {
           vars[env].apiName = `valkyrie-${vars.template.projectName}-${env}-api`;
-          return await generateRetryFn(() => vars.apigateway.createRestApi({
+          return generateRetryFn(() => vars.apigateway.createRestApi({
             name: vars[env].apiName,
             description: 'Valkyrie application'
           }).promise(), 10)();
@@ -253,11 +253,11 @@ module.exports = {
       })
 
       //RESOURCE CREATION
-      .then(() => Promise.all(vars.template.environments.map(async env => await generateRetryFn(() => vars.apigateway.getResources({restApiId: valkconfig.Environments[env].Api.Id}).promise())())))
-      .then(results => Promise.all(results.map(async ({items: [{id: parentId}]}, i) => {
+      .then(() => Promise.all(vars.template.environments.map(env => generateRetryFn(() => vars.apigateway.getResources({restApiId: valkconfig.Environments[env].Api.Id}).promise())())))
+      .then(results => Promise.all(results.map(({items: [{id: parentId}]}, i) => {
         const env = vars.template.environments[i];
         l.wait(`creating api gateway proxy+ resource${vars.plural? 's' : ''}`);
-        return await generateRetryFn(() => vars.apigateway.createResource({
+        return generateRetryFn(() => vars.apigateway.createResource({
           restApiId: valkconfig.Environments[env].Api.Id,
           parentId,
           pathPart: '{proxy+}'
@@ -272,7 +272,7 @@ module.exports = {
       //METHOD CREATION
       .then(() => {
         l.wait(`creating ANY method for {proxy+} resource${vars.plural? 's' : ''}`);
-        return Promise.all(vars.template.environments.map(async env => await generateRetryFn(() => vars.apigateway.putMethod({
+        return Promise.all(vars.template.environments.map(env => generateRetryFn(() => vars.apigateway.putMethod({
           authorizationType: 'NONE',
           httpMethod: 'ANY',
           resourceId: vars[env].resourceId,
@@ -287,7 +287,7 @@ module.exports = {
       //ATTACHING LAMBDA
       .then(() => {
         l.wait(`attaching Lambda function${vars.plural? 's' : ''} to api gateway endpoint${vars.plural? 's' : ''}`);
-        return Promise.all(vars.template.environments.map(async env => await generateRetryFn(() => vars.apigateway.putIntegration({
+        return Promise.all(vars.template.environments.map(env => generateRetryFn(() => vars.apigateway.putIntegration({
           httpMethod: 'ANY',
           resourceId: vars[env].resourceId,
           restApiId: valkconfig.Environments[env].Api.Id,
@@ -305,7 +305,7 @@ module.exports = {
       //RESPONSE INTEGRATION
       .then(() => {
         l.wait(`adding api gateway response integration${vars.plural? 's' : ''}`);
-        return Promise.all(vars.template.environments.map(async env => await generateRetryFn(() => vars.apigateway.putIntegrationResponse({
+        return Promise.all(vars.template.environments.map(env => generateRetryFn(() => vars.apigateway.putIntegrationResponse({
           httpMethod: 'ANY',
           resourceId: vars[env].resourceId,
           restApiId: valkconfig.Environments[env].Api.Id,
@@ -318,7 +318,7 @@ module.exports = {
       //ADDING PERMISSION TO LAMBDA TO BE CALLED FROM API GATEWAY
       .then(() => {
         l.wait(`adding permission to Lambda function${vars.plural? 's' : ''}`);
-        return Promise.all(vars.template.environments.map(async env => await generateRetryFn(() => vars.lambda.addPermission({
+        return Promise.all(vars.template.environments.map(env => generateRetryFn(() => vars.lambda.addPermission({
           Action: 'lambda:InvokeFunction',
           FunctionName: valkconfig.Environments[env].Lambda.FunctionName,
           Principal: 'apigateway.amazonaws.com',
@@ -331,7 +331,7 @@ module.exports = {
       //DEPLOYMENT CREATION
       .then(() => {
         l.wait(`creating deployment${vars.plural? 's' : ''}`);
-        return Promise.all(vars.template.environments.map(async env => await generateRetryFn(() => vars.apigateway.createDeployment({
+        return Promise.all(vars.template.environments.map(env => generateRetryFn(() => vars.apigateway.createDeployment({
           restApiId: valkconfig.Environments[env].Api.Id,
           stageName: env.toLowerCase()
         }).promise())()));

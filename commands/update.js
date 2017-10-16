@@ -3,7 +3,7 @@ const {promisify} = require('util');
 const zipdir = promisify(require('zip-dir'));
 const inquirer = require('inquirer');
 const argv = require('simple-argv');
-const {getProjectInfo, getAWSCredentials, getRequiredEnv, breakChain, getEnvColor} = require('../utils');
+const {getProjectInfo, getAWSCredentials, getRequiredEnv, breakChain, getEnvColor, generateRetryFn} = require('../utils');
 const AWS = require('aws-sdk');
 
 module.exports = {
@@ -62,12 +62,12 @@ module.exports = {
         l.wait(`updating ${envColor}${env}${l.colors.reset} Lambda ${update.join(' and ')}...`);
         if (update.includes('code')) promises.push(new Promise((resolve, reject) => {
           zipdir(root)
-            .then(ZipFile => lambda.updateFunctionCode({FunctionName: valkconfig.Environments[env].Lambda.FunctionName, ZipFile}).promise())
+            .then(ZipFile => generateRetryFn(() => lambda.updateFunctionCode({FunctionName: valkconfig.Environments[env].Lambda.FunctionName, ZipFile}).promise())())
             .then(resolve)
             .catch(reject);
         }));
 
-        if (update.includes('config')) promises.push(lambda.updateFunctionConfiguration(valkconfig.Environments[env].Lambda).promise());
+        if (update.includes('config')) promises.push(generateRetryFn(() => lambda.updateFunctionConfiguration(valkconfig.Environments[env].Lambda).promise())());
         return Promise.all(promises);
       })
       .then(([data]) => {
