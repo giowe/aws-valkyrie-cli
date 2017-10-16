@@ -6,6 +6,7 @@ const AWS = require('aws-sdk');
 const argv = require('simple-argv');
 const inquirer = require('inquirer');
 const { promisify } = require('util');
+const { spawn } = require('child_process');
 const zipdir = promisify(require('zip-dir'));
 const e = module.exports = {};
 
@@ -103,8 +104,32 @@ e.getApiUrl = (valkconfig, env) => `https://${valkconfig.Environments[env].Api.I
 e.createDistZip = (projectFolder) => new Promise((resolve, reject) => {
   let valkignore;
   try {
-    valkignore = [fs.readFileSync(path.join(projectFolder, '.valkignore')).split('\n')];
+    valkignore = fs.readFileSync(path.join(projectFolder, '.valkignore')).toString().split('\n').filter(raw => raw);
   } catch(ignore) {}
 
-  console.log(valkignore)
+  //const { dependencies } = require(path.join(projectFolder, 'package.json'));
+
+  e.lsDependencies()
+    .then(({ dependencies }) => {
+      const dig = (dep, modules = {}) => {
+        Object.entries(dep).forEach(([ name, details ]) => {
+          modules[name] = true;
+          if (details.dependencies) dig(details.dependencies, modules);
+        });
+        return modules;
+      };
+
+      console.log(Object.keys(dig(dependencies)));
+    })
+    .then(resolve)
+    .catch(reject);
+});
+
+e.lsDependencies = () => new Promise((resolve, reject) => {
+  const ls = spawn('npm', ['ls', '--production', '--json']);
+  let out = '';
+  ls.stdout.on('data', data => out += data);
+  let err = '';
+  ls.stderr.on('data', (data) => err += data);
+  ls.on('close', () => err ? reject(err) : resolve(JSON.parse(out)));
 });
