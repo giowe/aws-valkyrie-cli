@@ -73,7 +73,7 @@ e.joinUrl = (...args) => args.filter(e => e).map(e => e.replace('/', '')).join('
 
 
 const wait = (time = 1000) => new Promise(resolve => setTimeout(resolve, time));
-e.generateRetryFn = (promiseFnWrapper) => async function retryFn(maxRetries = 10) {
+e.generateRetryFn = (promiseFnWrapper, retries = 3) => async function retryFn(maxRetries = retries) {
   try {
     return await promiseFnWrapper();
   } catch(err) {
