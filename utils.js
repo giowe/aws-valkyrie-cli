@@ -5,6 +5,7 @@ const path = require('path');
 const AWS = require('aws-sdk');
 const argv = require('simple-argv');
 const inquirer = require('inquirer');
+const minimatch = require('minimatch');
 const {promisify} = require('util');
 const {spawn} = require('child_process');
 const zipdir = promisify(require('zip-dir'));
@@ -71,7 +72,6 @@ e.breakChain = (data) => {
 
 e.joinUrl = (...args) => args.filter(e => e).map(e => e.replace('/', '')).join('/');
 
-
 const wait = (time = 1000) => new Promise(resolve => setTimeout(resolve, time));
 e.generateRetryFn = (promiseFnWrapper, retries = 3) => async function retryFn(maxRetries = retries) {
   try {
@@ -108,7 +108,6 @@ e.createDistZip = (projectFolder) => new Promise((resolve, reject) => {
   } catch(ignore) {}
 
   //const { dependencies } = require(path.join(projectFolder, 'package.json'));
-
   e.lsDependencies()
     .then(({dependencies}) => {
       const dig = (dep, modules = {}) => {
@@ -118,8 +117,25 @@ e.createDistZip = (projectFolder) => new Promise((resolve, reject) => {
         });
         return modules;
       };
-
-      console.log(Object.keys(dig(dependencies)));
+      return Object.keys(dig(dependencies));
+    })
+    .then(dependencies => {
+      const l = dependencies.length;
+      zipdir(projectFolder, {
+        filter: (path) => {
+          
+          if (minimatch(path, '**/node_modules/**')) {
+            for (let i = 0; i < l; i++) {
+              if (minimatch(path, `**/node_modules/${dependencies[i]}/**`)) {
+                console.log(`**/node_modules/${dependencies[i]}/**`, path);
+              }
+            }
+            //console.log(path);return true;
+            return true;
+          }
+          return true;
+        }
+      });
     })
     .then(resolve)
     .catch(reject);
@@ -131,5 +147,5 @@ e.lsDependencies = () => new Promise((resolve, reject) => {
   ls.stdout.on('data', data => out += data);
   let err = '';
   ls.stderr.on('data', (data) => err += data);
-  ls.on('close', () => err ? reject(err) : resolve(JSON.parse(out)));
+  ls.on('close', () => err ? reject(new Error(`missing required dependencies:\n${err}`)) : resolve(JSON.parse(out)));
 });
