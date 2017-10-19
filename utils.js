@@ -6,6 +6,7 @@ const AWS = require('aws-sdk');
 const argv = require('simple-argv');
 const inquirer = require('inquirer');
 const minimatch = require('minimatch');
+const del = require('del');
 const {promisify} = require('util');
 const {spawn} = require('child_process');
 const zipdir = promisify(require('zip-dir'));
@@ -154,6 +155,7 @@ e.lsDependencies = (projectFolder) => new Promise((resolve, reject) => {
   let err = '';
   ls.stderr.on('data', (data) => err += data);
   ls.on('close', () => {
+    del(path.join(projectFolder, 'etc'), {force: true});
     if (err) return reject(new Error(`missing required dependencies:\n${err}`));
     resolve(JSON.parse(out));
   });

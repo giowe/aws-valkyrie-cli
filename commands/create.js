@@ -204,7 +204,7 @@ module.exports = {
         l.success('project packages installed;');
         return del(path.join(vars.projectFolder, 'etc'), {force: true});
       })
-
+      
       //LAMBDA CREATION
       .then(() => createDistZip(vars.projectFolder))
       .then(buffer => {
