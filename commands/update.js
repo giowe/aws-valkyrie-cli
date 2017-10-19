@@ -1,9 +1,7 @@
 'use strict';
-const {promisify} = require('util');
-const zipdir = promisify(require('zip-dir'));
 const inquirer = require('inquirer');
 const argv = require('simple-argv');
-const {getProjectInfo, getAWSCredentials, getRequiredEnv, breakChain, getEnvColor, generateRetryFn} = require('../utils');
+const {getProjectInfo, getAWSCredentials, getRequiredEnv, breakChain, getEnvColor, generateRetryFn, createDistZip} = require('../utils');
 const AWS = require('aws-sdk');
 
 module.exports = {
@@ -61,7 +59,7 @@ module.exports = {
 
         l.wait(`updating ${envColor}${env}${l.colors.reset} Lambda ${update.join(' and ')}...`);
         if (update.includes('code')) promises.push(new Promise((resolve, reject) => {
-          zipdir(root)
+          createDistZip(root)
             .then(ZipFile => generateRetryFn(() => lambda.updateFunctionCode({FunctionName: valkconfig.Environments[env].Lambda.FunctionName, ZipFile}).promise())())
             .then(resolve)
             .catch(reject);

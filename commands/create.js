@@ -5,11 +5,10 @@ const del = require('del');
 const {promisify} = require('util');
 const validate = require('validate-npm-package-name');
 const exec = promisify(require('child_process').exec);
-const zipdir = promisify(require('zip-dir'));
 const path = require('path');
 const fs = require('fs');
 const argv = require('simple-argv');
-const {getAWSCredentials, listFiles, subPath, joinUrl, generateRetryFn, getEnvColor, getApiUrl} = require('../utils');
+const {getAWSCredentials, listFiles, subPath, joinUrl, generateRetryFn, getEnvColor, getApiUrl, createDistZip} = require('../utils');
 const cwd = process.cwd();
 
 module.exports = {
@@ -58,14 +57,14 @@ module.exports = {
       .then(({scaffolder}) => {
         vars.scaffolderPath = vars.scaffolders[scaffolder].path;
         const defaultInputs = [
-          {type: 'input', name: 'projectName', message: 'project name:', default: argv._[1], validate: (name => {
+          {type: 'input', name: 'projectName', message: 'project name:', default: argv._[1], validate: name => {
             const {validForNewPackages, warnings, errors} = validate(name);
             if (validForNewPackages) return true;
             const out = [];
             if (errors) out.push(...errors);
             if (warnings) out.push(...warnings);
             return `${out.join(', ')};`;
-          })},
+          }},
           {type: 'checkbox', name: 'environments', message: 'select which environment you want to generate:', choices: [{name: 'staging', checked: true}, {name: 'production', checked: true}], validate: (choices) => choices.length ? true : 'select at least one environment;'},
           {type: 'input', name: 'region', message: 'region name:', validate: notNullValidator, default: 'eu-west-1'},
           {type: 'input', name: 'description', message: 'description:'},
@@ -202,12 +201,12 @@ module.exports = {
         return exec(`npm install --prefix ${vars.projectFolder}`);
       })
       .then(() => {
-        del.sync(path.join(vars.projectFolder, 'etc'), {force: true});
         l.success('project packages installed;');
+        return del(path.join(vars.projectFolder, 'etc'), {force: true});
       })
 
       //LAMBDA CREATION
-      .then(() => zipdir(vars.projectFolder))
+      .then(() => createDistZip(vars.projectFolder))
       .then(buffer => {
         l.wait(`creating Lambda function${vars.plural? 's' : ''}`);
         const lambda = vars.lambda = new AWS.Lambda(Object.assign({region: valkconfig.Project.Region}, awsCredentials));

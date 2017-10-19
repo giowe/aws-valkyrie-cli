@@ -102,13 +102,13 @@ e.getEnvColor = (env) => env.toLowerCase() === 'staging' ? 'cyan' : 'magenta';
 e.getApiUrl = (valkconfig, env) => `https://${valkconfig.Environments[env].Api.Id}.execute-api.${valkconfig.Project.Region}.amazonaws.com/${env.toLowerCase()}`;
 
 e.createDistZip = (projectFolder) => new Promise((resolve, reject) => {
-  let valkignore;
+  const valkignore = ['.valkignore'];
   try {
-    valkignore = fs.readFileSync(path.join(projectFolder, '.valkignore')).toString().split('\n').filter(raw => raw);
+    valkignore.push (...fs.readFileSync(path.join(projectFolder, '.valkignore')).toString().split('\n').filter(raw => raw));
   } catch(ignore) {}
 
-  //const { dependencies } = require(path.join(projectFolder, 'package.json'));
-  e.lsDependencies()
+
+  e.lsDependencies(projectFolder)
     .then(({dependencies}) => {
       const dig = (dep, modules = {}) => {
         Object.entries(dep).forEach(([ name, details ]) => {
@@ -120,19 +120,25 @@ e.createDistZip = (projectFolder) => new Promise((resolve, reject) => {
       return Object.keys(dig(dependencies));
     })
     .then(dependencies => {
-      const l = dependencies.length;
-      zipdir(projectFolder, {
-        filter: (path) => {
-          
-          if (minimatch(path, '**/node_modules/**')) {
-            for (let i = 0; i < l; i++) {
-              if (minimatch(path, `**/node_modules/${dependencies[i]}/**`)) {
-                console.log(`**/node_modules/${dependencies[i]}/**`, path);
-              }
+      const minimatchOptions = {dot: true};
+      const dependenciesLength = dependencies.length;
+      const valkignoreLength = valkignore.length;
+      return zipdir(projectFolder, {
+        filter: (p) => {
+          if (minimatch(p, path.join(projectFolder, '/node_modules/.bin'), minimatchOptions)) return false;
+
+          if (minimatch(p, '**/node_modules/**', minimatchOptions)) {
+            const modulePath = p.replace(path.join(projectFolder, 'node_modules'), '');
+            for (let i = 0; i < dependenciesLength; i++) {
+              if (minimatch(modulePath, `/${dependencies[i]}/**`, minimatchOptions) || minimatch(modulePath, `/${dependencies[i]}`, minimatchOptions)) return true;
             }
-            //console.log(path);return true;
-            return true;
+            return false;
           }
+
+          for (let i = 0; i < valkignoreLength; i++) {
+            if (minimatch(p, path.join(projectFolder, valkignore[i]))) return false;
+          }
+
           return true;
         }
       });
@@ -141,11 +147,14 @@ e.createDistZip = (projectFolder) => new Promise((resolve, reject) => {
     .catch(reject);
 });
 
-e.lsDependencies = () => new Promise((resolve, reject) => {
-  const ls = spawn('npm', ['ls', '--production', '--json']);
+e.lsDependencies = (projectFolder) => new Promise((resolve, reject) => {
+  const ls = spawn('npm', ['ls', '--production', '--json', '--prefix', projectFolder]);
   let out = '';
   ls.stdout.on('data', data => out += data);
   let err = '';
   ls.stderr.on('data', (data) => err += data);
-  ls.on('close', () => err ? reject(new Error(`missing required dependencies:\n${err}`)) : resolve(JSON.parse(out)));
+  ls.on('close', () => {
+    if (err) return reject(new Error(`missing required dependencies:\n${err}`));
+    resolve(JSON.parse(out));
+  });
 });
