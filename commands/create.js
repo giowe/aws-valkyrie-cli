@@ -8,7 +8,8 @@ const exec = promisify(require('child_process').exec);
 const path = require('path');
 const fs = require('fs');
 const argv = require('simple-argv');
-const {getAWSCredentials, listFiles, subPath, joinUrl, generateRetryFn, getEnvColor, getApiUrl, createDistZip} = require('../utils');
+const urlJoin = require('url-join');
+const {getAWSCredentials, listFiles, subPath, generateRetryFn, getEnvColor, getApiUrl, createDistZip} = require('../utils');
 const cwd = process.cwd();
 
 module.exports = {
@@ -204,7 +205,7 @@ module.exports = {
         l.success('project packages installed;');
         return del(path.join(vars.projectFolder, 'etc'), {force: true});
       })
-      
+
       //LAMBDA CREATION
       .then(() => createDistZip(vars.projectFolder))
       .then(buffer => {
@@ -341,7 +342,7 @@ module.exports = {
         saveValkconfig();
         l.success(`valkconfig.json:\n${JSON.stringify(valkconfig, null, 2)}`);
         l.success(`Valkyrie ${vars.template.projectName} project successfully created; the application is available at the following link${vars.template.environments.length > 1 ? 's' : ''}:`);
-        Promise.all(vars.template.environments.map(env => l.log(`- ${l.leftPad(`${env.toLowerCase()}:`, 11)} ${l.colors[getEnvColor(env)]}${joinUrl(getApiUrl(valkconfig, env), vars.root)}${l.colors.reset}`, {prefix: false})));
+        Promise.all(vars.template.environments.map(env => l.log(`- ${l.leftPad(`${env.toLowerCase()}:`, 11)} ${l.colors[getEnvColor(env)]}${urlJoin(getApiUrl(valkconfig, env), vars.root)}${l.colors.reset}`, {prefix: false})));
         resolve();
       })
       .catch(err => {

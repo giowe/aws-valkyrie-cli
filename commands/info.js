@@ -1,6 +1,6 @@
 'use strict';
 
-const {getProjectInfo, getAWSCredentials, /*getRequiredEnv,*/ getEnvColor, getApiUrl} = require('../utils');
+const {getProjectInfo, /*getAWSCredentials, getRequiredEnv,*/ getEnvColor, getApiUrl} = require('../utils');
 //const AWS = require('aws-sdk');
 //const argv = require('simple-argv');
 
