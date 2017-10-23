@@ -23,35 +23,30 @@ module.exports = {
     const awsCredentials = {credentials: getAWSCredentials()};
     const notNullValidator = (val) => val === '' ? 'required field;' : true;
     const templatesPrefix = 'valkyrie-scaffolder-';
-    const defaultTemplatePath = path.join(__dirname, '..', 'node_modules', 'valkyrie-scaffolder-default');
-    const defaultTemplateListName = `default (${require(path.join(defaultTemplatePath, 'package.json')).version})`;
+    /*const defaultTemplatePath = path.join(__dirname, '..', 'node_modules', 'valkyrie-scaffolder-default');
+    const defaultTemplateListName = `default (${require(path.join(defaultTemplatePath, 'package.json')).version})`;*/
     const saveValkconfig = () => fs.writeFileSync(path.join(vars.projectFolder, 'valkconfig.json'), JSON.stringify(valkconfig, null, 2));
 
     //SCAFFOLDER SELECTION
     exec('npm root -g')
       .then(({stdout}) => {
         vars.npmGlobalPath = stdout.replace('\n', '');
-        vars.scaffolders = {[defaultTemplateListName] : {
-          name: 'valkyrie-scaffolder-default',
-          path: defaultTemplatePath
-        }};
-        return inquirer.prompt({
-          type: 'list', name: 'scaffolder', message: 'select a template to scaffold your project:', choices: [
-            defaultTemplateListName,
-            ...fs.readdirSync(vars.npmGlobalPath).reduce((acc, module)=> {
-              if (module.substr(0, templatesPrefix.length) === templatesPrefix) {
-                const templatePath = path.join(vars.npmGlobalPath, module);
-                const templateListName = `${module.substr(templatesPrefix.length, module.length)} (${require(path.join(templatePath, 'package.json')).version})`;
-                vars.scaffolders[templateListName] = {
-                  name: module,
-                  path: templatePath
-                };
-                acc.push(templateListName);
-              }
-              return acc;
-            }, [])
-          ]
-        });
+        vars.scaffolders = {};
+        const scaffoldersList = fs.readdirSync(vars.npmGlobalPath).reduce((acc, module)=> {
+          if (module.substr(0, templatesPrefix.length) === templatesPrefix) {
+            const templatePath = path.join(vars.npmGlobalPath, module);
+            const templateListName = `${module.substr(templatesPrefix.length, module.length)} (${require(path.join(templatePath, 'package.json')).version})`;
+            vars.scaffolders[templateListName] = {
+              name: module,
+              path: templatePath
+            };
+            acc.push(templateListName);
+          }
+          return acc;
+        }, []);
+
+        if (!scaffoldersList.length) throw new Error(`no Valkyrie scaffolders found! Install globally at least the default Valkyrie scaffolder running command: ${l.colors.magenta}npm i -g valkyrie-scaffolder-default${l.colors.reset}`);
+        return inquirer.prompt({type: 'list', name: 'scaffolder', message: 'select a template to scaffold your project:', choices: scaffoldersList});
       })
 
       //TEMPLATE VARIABLES INPUT
