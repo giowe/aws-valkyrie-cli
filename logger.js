@@ -1,7 +1,7 @@
 /* eslint-disable no-console */
 'use strict';
 const argv = require('simple-argv');
-const { Spinner } = require('cli-spinner');
+const {Spinner} = require('cli-spinner');
 
 const colors = {
   'reset': '\x1b[0m',
@@ -52,7 +52,7 @@ function repeat(text, len) {
 
 function log(color, ...args) {
   stopSpinner();
-  const options = { prefix: true, inline: false };
+  const options = {prefix: true, inline: false};
   if (typeof args[args.length -1] === 'object') Object.assign(options, args.pop());
   args.unshift(color);
   if (options.prefix) args.unshift(prefix);
@@ -67,7 +67,7 @@ function log(color, ...args) {
   }).join(' ')}${colors.reset}`);
 }
 
-function frame(text, options = { prefix: true }) {
+function frame(text, options = {prefix: true}) {
   const border = repeat('─', text.replace(/\u001b\[.*?m/g, '').length + 2);
   const padding = options.prefix ? repeat(' ', 7) : '';
   console.log([
@@ -97,7 +97,7 @@ const spinner = new Spinner();
 spinner.setSpinnerString('⠋⠙⠹⠸⠼⠴⠦⠧⠇⠏');
 function wait(...args) {
   stopSpinner();
-  const options = { prefix: true };
+  const options = {prefix: true};
   if (typeof args[args.length -1] === 'object') Object.assign(options, args.pop());
   spinner.text = `${options.prefix ? `${prefix} `: ''}[${colors.white}WAIT${colors.reset}] ${args.join(' ')} %s`;
   spinner.start();

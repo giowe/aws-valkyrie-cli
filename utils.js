@@ -5,8 +5,10 @@ const path = require('path');
 const AWS = require('aws-sdk');
 const argv = require('simple-argv');
 const inquirer = require('inquirer');
-const { promisify } = require('util');
-const { spawn } = require('child_process');
+const minimatch = require('minimatch');
+const del = require('del');
+const {promisify} = require('util');
+const {spawn} = require('child_process');
 const zipdir = promisify(require('zip-dir'));
 const e = module.exports = {};
 
@@ -71,9 +73,8 @@ e.breakChain = (data) => {
 
 e.joinUrl = (...args) => args.filter(e => e).map(e => e.replace('/', '')).join('/');
 
-
 const wait = (time = 1000) => new Promise(resolve => setTimeout(resolve, time));
-e.generateRetryFn = (promiseFnWrapper) => async function retryFn(maxRetries = 10) {
+e.generateRetryFn = (promiseFnWrapper, retries = 3) => async function retryFn(maxRetries = retries) {
   try {
     return await promiseFnWrapper();
   } catch(err) {
@@ -89,12 +90,12 @@ e.getRequiredEnv = (valkconfig) => new Promise(resolve => {
   const availableEnv = Object.keys(valkconfig.Environments);
   if (availableEnv.length === 0) throw new Error('no environment found in valkconfig.json');
   else if (availableEnv.length > 1) {
-    if (argv.staging) return resolve ({ env: 'staging' });
-    else if (argv.production) return resolve({ env: 'production' });
+    if (argv.staging) return resolve ({env: 'staging'});
+    else if (argv.production) return resolve({env: 'production'});
     return resolve(inquirer.prompt([
-      { type: 'list', name: 'env', message: 'select the environment:', choices: ['staging', 'production'], default: 0 }
+      {type: 'list', name: 'env', message: 'select the environment:', choices: ['staging', 'production'], default: 0}
     ]));
-  } else return resolve({ env: availableEnv[0].toLowerCase() });
+  } else return resolve({env: availableEnv[0].toLowerCase()});
 });
 
 e.getEnvColor = (env) => env.toLowerCase() === 'staging' ? 'cyan' : 'magenta';
@@ -102,15 +103,14 @@ e.getEnvColor = (env) => env.toLowerCase() === 'staging' ? 'cyan' : 'magenta';
 e.getApiUrl = (valkconfig, env) => `https://${valkconfig.Environments[env].Api.Id}.execute-api.${valkconfig.Project.Region}.amazonaws.com/${env.toLowerCase()}`;
 
 e.createDistZip = (projectFolder) => new Promise((resolve, reject) => {
-  let valkignore;
+  const valkignore = ['.valkignore'];
   try {
-    valkignore = fs.readFileSync(path.join(projectFolder, '.valkignore')).toString().split('\n').filter(raw => raw);
+    valkignore.push (...fs.readFileSync(path.join(projectFolder, '.valkignore')).toString().split('\n').filter(raw => raw));
   } catch(ignore) {}
 
-  //const { dependencies } = require(path.join(projectFolder, 'package.json'));
 
-  e.lsDependencies()
-    .then(({ dependencies }) => {
+  e.lsDependencies(projectFolder)
+    .then(({dependencies}) => {
       const dig = (dep, modules = {}) => {
         Object.entries(dep).forEach(([ name, details ]) => {
           modules[name] = true;
@@ -118,18 +118,45 @@ e.createDistZip = (projectFolder) => new Promise((resolve, reject) => {
         });
         return modules;
       };
+      return Object.keys(dig(dependencies));
+    })
+    .then(dependencies => {
+      const minimatchOptions = {dot: true};
+      const dependenciesLength = dependencies.length;
+      const valkignoreLength = valkignore.length;
+      return zipdir(projectFolder, {
+        filter: (p) => {
+          if (minimatch(p, path.join(projectFolder, '/node_modules/.bin'), minimatchOptions)) return false;
 
-      console.log(Object.keys(dig(dependencies)));
+          if (minimatch(p, '**/node_modules/**', minimatchOptions)) {
+            const modulePath = p.replace(path.join(projectFolder, 'node_modules'), '');
+            for (let i = 0; i < dependenciesLength; i++) {
+              if (minimatch(modulePath, `/${dependencies[i]}/**`, minimatchOptions) || minimatch(modulePath, `/${dependencies[i]}`, minimatchOptions)) return true;
+            }
+            return false;
+          }
+
+          for (let i = 0; i < valkignoreLength; i++) {
+            if (minimatch(p, path.join(projectFolder, valkignore[i]))) return false;
+          }
+
+          return true;
+        }
+      });
     })
     .then(resolve)
     .catch(reject);
 });
 
-e.lsDependencies = () => new Promise((resolve, reject) => {
-  const ls = spawn('npm', ['ls', '--production', '--json']);
+e.lsDependencies = (projectFolder) => new Promise((resolve, reject) => {
+  const ls = spawn('npm', ['ls', '--production', '--json', '--prefix', projectFolder]);
   let out = '';
   ls.stdout.on('data', data => out += data);
   let err = '';
   ls.stderr.on('data', (data) => err += data);
-  ls.on('close', () => err ? reject(err) : resolve(JSON.parse(out)));
+  ls.on('close', () => {
+    del(path.join(projectFolder, 'etc'), {force: true});
+    if (err) return reject(new Error(`missing required dependencies:\n${err}`));
+    resolve(JSON.parse(out));
+  });
 });
