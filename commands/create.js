@@ -23,8 +23,6 @@ module.exports = {
     const awsCredentials = {credentials: getAWSCredentials()};
     const notNullValidator = (val) => val === '' ? 'required field;' : true;
     const templatesPrefix = 'valkyrie-scaffolder-';
-    /*const defaultTemplatePath = path.join(__dirname, '..', 'node_modules', 'valkyrie-scaffolder-default');
-    const defaultTemplateListName = `default (${require(path.join(defaultTemplatePath, 'package.json')).version})`;*/
     const saveValkconfig = () => fs.writeFileSync(path.join(vars.projectFolder, 'valkconfig.json'), JSON.stringify(valkconfig, null, 2));
 
     //SCAFFOLDER SELECTION
@@ -45,7 +43,7 @@ module.exports = {
           return acc;
         }, []);
 
-        if (!scaffoldersList.length) throw new Error(`no Valkyrie scaffolders found! Install globally at least the default Valkyrie scaffolder running command: ${l.colors.magenta}npm i -g valkyrie-scaffolder-default${l.colors.reset}`);
+        if (!scaffoldersList.length) throw new Error(`no Valkyrie scaffolders found! Install globally at least the default Valkyrie scaffolder running command: ${l.colors.cyan}npm i -g valkyrie-scaffolder-default${l.colors.reset}`);
         return inquirer.prompt({type: 'list', name: 'scaffolder', message: 'select a template to scaffold your project:', choices: scaffoldersList});
       })
 
