@@ -7,6 +7,7 @@ const argv = require('simple-argv');
 const inquirer = require('inquirer');
 const minimatch = require('minimatch');
 const del = require('del');
+const l = require('./logger');
 const {promisify} = require('util');
 const {spawn} = require('child_process');
 const zipdir = promisify(require('zip-dir'));
@@ -138,6 +139,7 @@ e.createDistZip = (projectFolder) => new Promise((resolve, reject) => {
             if (minimatch(p, path.join(projectFolder, valkignore[i]))) return false;
           }
 
+          l.debug(p);
           return true;
         }
       });

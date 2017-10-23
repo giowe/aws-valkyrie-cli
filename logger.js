@@ -93,6 +93,10 @@ function success(...args) {
   log(`[${colors.green}SUCCESS${colors.reset}]`, ...args);
 }
 
+function debug(...args) {
+  if (argv.debug) log(`[${colors.magenta}DEBUG${colors.reset}]`, ...args);
+}
+
 const spinner = new Spinner();
 spinner.setSpinnerString('⠋⠙⠹⠸⠼⠴⠦⠧⠇⠏');
 function wait(...args) {
@@ -117,6 +121,7 @@ module.exports = {
   error,
   warning,
   success,
+  debug,
   wait,
   colors
 };
