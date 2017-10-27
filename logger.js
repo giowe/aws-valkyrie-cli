@@ -68,6 +68,7 @@ function log(color, ...args) {
 }
 
 function frame(text, options = {prefix: true}) {
+  stopSpinner();
   const border = repeat('─', text.replace(/\u001b\[.*?m/g, '').length + 2);
   const padding = options.prefix ? repeat(' ', 7) : '';
   console.log([
