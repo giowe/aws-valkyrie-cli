@@ -192,14 +192,11 @@ module.exports = {
       //INSTALLING PACKAGES
       .then(() => {
         l.wait('installing npm packages');
-        return exec(`cd ${vars.projectFolder}`)
-        //return exec(`npm install --prefix ${vars.projectFolder}`);
+        return exec(`npm install --prefix ${vars.projectFolder}`);
       })
-      .then(() => exec(`npm install`))
       .then(() => {
         l.success('project packages installed;');
-        return exec('cd ..')
-        //return del(path.join(vars.projectFolder, 'etc'), {force: true});
+        return del(path.join(vars.projectFolder, 'etc'), {force: true});
       })
 
       //LAMBDA CREATION
