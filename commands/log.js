@@ -1,5 +1,3 @@
-'use strict';
-
 const {getProjectInfo, getAWSCredentials, getRequiredEnv, getEnvColor} = require('../utils');
 const argv = require('simple-argv');
 const CwLogs = require('aws-cwlogs');

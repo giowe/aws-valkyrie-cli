@@ -1,4 +1,3 @@
-'use strict';
 const inquirer = require('inquirer');
 const argv = require('simple-argv');
 const {getProjectInfo, getAWSCredentials, getRequiredEnv, breakChain, getEnvColor, generateRetryFn, createDistZip} = require('../utils');

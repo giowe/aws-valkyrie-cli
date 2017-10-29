@@ -1,5 +1,3 @@
-'use strict';
-
 const AWS = require('aws-sdk');
 const {getAWSCredentials, getProjectInfo, breakChain, generateRetryFn} = require('../utils');
 const inquirer = require('inquirer');

@@ -1,4 +1,3 @@
-'use strict';
 const path = require('path');
 const requireDir = require('require-dir');
 const request = require('request');

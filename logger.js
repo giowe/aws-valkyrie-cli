@@ -1,5 +1,4 @@
 /* eslint-disable no-console */
-'use strict';
 const argv = require('simple-argv');
 const {Spinner} = require('cli-spinner');
 

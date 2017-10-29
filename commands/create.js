@@ -1,4 +1,3 @@
-'use strict';
 const inquirer = require('inquirer');
 const AWS = require('aws-sdk');
 const del = require('del');

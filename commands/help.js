@@ -1,5 +1,3 @@
-'use strict';
-
 module.exports = {
   description: 'Shows all commands info;',
   fn: ({l, commands}) => new Promise((resolve) => {
