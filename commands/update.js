@@ -59,6 +59,7 @@ module.exports = {
 
         l.wait(`updating ${envColor}${env}${l.colors.reset} Lambda ${update.join(' and ')}...`);
         if (update.includes('code')) promises.push(new Promise((resolve, reject) => {
+          //require('util').promisify(require('zip-dir'))(root)
           createDistZip(root)
             .then(ZipFile => generateRetryFn(() => lambda.updateFunctionCode({FunctionName: valkconfig.Environments[env].Lambda.FunctionName, ZipFile}).promise())())
             .then(resolve)
