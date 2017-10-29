@@ -18,7 +18,8 @@ if ((argv.version || argv.v) && !argv._.length) {
   request('https://registry.npmjs.org/aws-valkyrie-cli/latest', (err, res, body) => {
     if (body) {
       const latestVersion = JSON.parse(body).version;
-      if (latestVersion !== pkg.version) l.frame(`new version available: ${l.colors.yellow}${latestVersion}${l.colors.reset}`);
+      const compareVersions = require('compare-versions');
+      if (compareVersions(pkg.version, latestVersion) === -1) l.frame(`new version available: ${l.colors.yellow}${latestVersion}${l.colors.reset}`);
       else l.log('you are currently using the latest version;');
     }
   });

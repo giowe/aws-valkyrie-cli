@@ -1,6 +1,6 @@
 {
   "name": "aws-valkyrie-cli",
-  "version": "0.10.0",
+  "version": "0.10.3",
   "description": "",
   "author": "Giovanni Bruno",
   "contributors": [
@@ -20,6 +20,7 @@
     "aws-cwlogs": "^2.5.0",
     "aws-sdk": "^2.138.0",
     "cli-spinner": "^0.2.6",
+    "compare-versions": "^3.1.0",
     "del": "^3.0.0",
     "gulp": "^3.9.1",
     "inquirer": "^3.3.0",
