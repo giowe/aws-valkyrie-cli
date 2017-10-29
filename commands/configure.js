@@ -1,5 +1,3 @@
-'use strict';
-
 const inquirer = require('inquirer');
 const argv = require('simple-argv');
 const {getGlobalConfig, saveGlobalConfig} = require('../utils');
