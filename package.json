@@ -1,6 +1,6 @@
 {
   "name": "aws-valkyrie-cli",
-  "version": "0.10.3",
+  "version": "0.11.0",
   "description": "",
   "author": "Giovanni Bruno",
   "contributors": [
@@ -17,10 +17,13 @@
   "license": "ISC",
   "main": "main.js",
   "dependencies": {
+    "aws-apigateway-proxy-local": "^0.1.1",
     "aws-cwlogs": "^2.5.0",
     "aws-sdk": "^2.138.0",
+    "body-parser": "^1.18.2",
     "cli-spinner": "^0.2.6",
     "compare-versions": "^3.1.0",
+    "deep-assign": "^2.0.0",
     "del": "^3.0.0",
     "gulp": "^3.9.1",
     "inquirer": "^3.3.0",
