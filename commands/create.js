@@ -239,7 +239,7 @@ module.exports = {
         results.forEach(({id: restApiId}, i) => {
           const env = vars.template.environments[i];
           valkconfig.Environments[env].Api.Id = restApiId;
-          l.success(`${vars.template.projectName} ${env} API (id: ${restApiId}) created in ${valkconfig.Project.Region};`);
+          l.success(`${vars[env].apiName} api (id: ${restApiId}) created in ${valkconfig.Project.Region};`);
         });
         saveValkconfig();
       })
