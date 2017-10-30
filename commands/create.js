@@ -113,8 +113,8 @@ module.exports = {
               }
             ]
           }),
-          RoleName: `valkyrie-${vars.template.projectName}-${env}-lambda-role`,
-          Description: `Valkyrie "${vars.template.projectName}" project ${env} role assumed by "valkyrie-${vars.template.projectName}-${env}-lambda"`,
+          RoleName: `${vars.template.projectName}-${env}-lambda`,
+          Description: `Valkyrie "${vars.template.projectName}" project ${env} role assumed by "${vars.template.projectName}-${env}"`,
           Path: `/valkyrie/${env}/`
         }).promise())()));
       })
@@ -123,7 +123,7 @@ module.exports = {
           const env = vars.template.environments[i];
           valkconfig.Environments[env].Iam.RoleName = roleName;
           vars[env].roleArn = roleArn;
-          l.success(`${roleName} role (arn: ${roleArn}) created;`);
+          l.success(`${roleName} role created; (arn: ${roleArn})`);
         });
         saveValkconfig();
       })
@@ -146,7 +146,7 @@ module.exports = {
               }
             ]
           }),
-          PolicyName: `valkyrie-${vars.template.projectName}-${env}-lambda-policy`,
+          PolicyName: `${vars.template.projectName}-${env}-lambda`,
           Description: `Valkyrie "${vars.template.projectName}" project ${env} policy attached to "${valkconfig.Environments[env].Iam.RoleName}"`,
           Path: `/valkyrie/${env}/`
         }).promise())()));
@@ -156,7 +156,7 @@ module.exports = {
           const env = vars.template.environments[i];
           valkconfig.Environments[env].Iam.PolicyArn = policyArn;
           vars[env].policyName = policyName;
-          l.success(`${policyName} policy (arn: ${policyArn}) created;`);
+          l.success(`${policyName} policy created; (arn: ${policyArn})`);
         });
         saveValkconfig();
       })
@@ -169,7 +169,7 @@ module.exports = {
           RoleName: valkconfig.Environments[env].Iam.RoleName
         }).promise())()));
       })
-      .then(() => vars.template.environments.forEach(env => l.success(`${vars[env].policyName} attached to ${valkconfig.Environments[env].Iam.RoleName};`)))
+      .then(() => vars.template.environments.forEach(env => l.success(`${vars[env].policyName} policy attached to ${valkconfig.Environments[env].Iam.RoleName} role;`)))
 
       //TEMPLATING AND SCAFFOLDING APPLICATION
       .then(() => {
@@ -205,7 +205,7 @@ module.exports = {
         const lambda = vars.lambda = new AWS.Lambda(Object.assign({region: valkconfig.Project.Region}, awsCredentials));
         return Promise.all(vars.template.environments.map(env => {
           vars[env].lambdaConfig = {
-            FunctionName: `valkyrie-${vars.template.projectName}-${env}-lambda`,
+            FunctionName: `${vars.template.projectName}-${env}`,
             Description: vars.template.description,
             Handler: vars.handler,
             MemorySize: vars.template.memorySize,
@@ -220,7 +220,7 @@ module.exports = {
         const env = vars.template.environments[i];
         vars[env].FunctionArn = FunctionArn;
         valkconfig.Environments[env].Lambda = vars[env].lambdaConfig;
-        l.success(`${FunctionName} created;`);
+        l.success(`${FunctionName} lambda created;`);
       }))
 
       //API CREATION
@@ -228,7 +228,7 @@ module.exports = {
         vars.apigateway = new AWS.APIGateway(Object.assign({region: valkconfig.Project.Region}, awsCredentials));
         l.wait(`creating api gateway infrastructure${vars.plural? 's' : ''}`);
         return Promise.all(vars.template.environments.map(env => {
-          vars[env].apiName = `valkyrie-${vars.template.projectName}-${env}-api`;
+          vars[env].apiName = `${vars.template.projectName}-${env}`;
           return generateRetryFn(() => vars.apigateway.createRestApi({
             name: vars[env].apiName,
             description: 'Valkyrie application'
@@ -292,7 +292,7 @@ module.exports = {
           uri: `arn:aws:apigateway:${valkconfig.Project.Region}:lambda:path/2015-03-31/functions/${vars[env].FunctionArn}/invocations`
         }).promise())()));
       })
-      .then(() => Promise.all(vars.template.environments.map(env => l.success(`${valkconfig.Environments[env].Lambda.FunctionName} attached to ${vars[env].apiName};`))))
+      .then(() => Promise.all(vars.template.environments.map(env => l.success(`${valkconfig.Environments[env].Lambda.FunctionName} lambda attached to ${vars[env].apiName} api;`))))
 
       //RESPONSE INTEGRATION
       .then(() => {
