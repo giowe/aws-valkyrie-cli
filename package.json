@@ -17,11 +17,11 @@
   "license": "ISC",
   "main": "main.js",
   "dependencies": {
-    "aws-apigateway-proxy-local": "^0.1.1",
+    "aws-apigateway-proxy-local": "^0.2.0",
     "aws-cwlogs": "^2.5.0",
-    "aws-sdk": "^2.138.0",
+    "aws-sdk": "^2.141.0",
     "body-parser": "^1.18.2",
-    "cli-spinner": "^0.2.6",
+    "cli-spinner": "^0.2.7",
     "compare-versions": "^3.1.0",
     "deep-assign": "^2.0.0",
     "del": "^3.0.0",
@@ -36,7 +36,7 @@
     "zip-dir": "^1.0.2"
   },
   "devDependencies": {
-    "eslint": "^4.9.0"
+    "eslint": "^4.10.0"
   },
   "bugs": {
     "url": "https://github.com/giowe/aws-valkyrie-cli/issues"
