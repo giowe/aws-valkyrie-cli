@@ -12,7 +12,7 @@ module.exports = {
     const programmaticDeletion = valkconfig !== null;
     if (!valkconfig) valkconfig = getProjectInfo().valkconfig;
 
-    const awsCredentials = {credentials: getAWSCredentials()};
+    const awsCredentials = {credentials: getAWSCredentials(argv.profile)};
     const {Region: region} = valkconfig.Project;
     const iam = new AWS.IAM(awsCredentials);
     const lambda = new AWS.Lambda(Object.assign({region}, awsCredentials));

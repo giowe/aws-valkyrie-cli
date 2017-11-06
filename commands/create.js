@@ -25,7 +25,7 @@ module.exports = {
       Project: {},
       Environments: {}
     };
-    const awsCredentials = {credentials: getAWSCredentials()};
+    const awsCredentials = {credentials: getAWSCredentials(argv.profile)};
     const notNullValidator = (val) => val === '' ? 'required field;' : true;
     const templatesPrefix = 'valkyrie-scaffolder-';
     const saveValkconfig = () => fs.writeFileSync(path.join(vars.projectFolder, 'valkconfig.json'), JSON.stringify(valkconfig, null, 2));

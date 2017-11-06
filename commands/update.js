@@ -56,7 +56,7 @@ module.exports = {
       .then(({confirm}) => { if (!confirm) breakChain(); })
       .then(() => {
         const promises = [];
-        const lambda = new AWS.Lambda(Object.assign({region: valkconfig.Project.Region}, {credentials: getAWSCredentials()}));
+        const lambda = new AWS.Lambda(Object.assign({region: valkconfig.Project.Region}, {credentials: getAWSCredentials(argv.profile)}));
         const envColor = vars.envColor = l.colors[getEnvColor(vars.env)];
         const {env, update} = vars;
 

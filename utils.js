@@ -76,8 +76,8 @@ e.saveGlobalConfig = (config, profile) => {
   fs.writeFileSync(path.join(os.homedir(), '.valkconfig'), JSON.stringify(fullConfig, null, 2));
 };
 
-e.getAWSCredentials = () => {
-  const config = e.getGlobalConfig();
+e.getAWSCredentials = (profile) => {
+  const config = e.getGlobalConfig(profile);
   if (config.secretAccessKey && config.accessKeyId) return new AWS.Credentials(config);
   return null;
 };

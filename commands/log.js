@@ -28,7 +28,7 @@ module.exports = {
           streamname: argv.stream || argv.s,
           momentTimeFormat: 'hh:mm:ss:SSS',
           logFormat: 'lambda',
-          credentials: getAWSCredentials()
+          credentials: getAWSCredentials(argv.profile)
         }).start();
       })
       .then(resolve)
