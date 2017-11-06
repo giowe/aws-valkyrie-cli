@@ -4,11 +4,17 @@ const CwLogs = require('aws-cwlogs');
 
 module.exports = {
   description: 'Streams real-time application logs from AWS CloudWatch Logs;',
-  flags: [{
-    name: 'stream',
-    short: 's',
-    description: 'AWS CloudWatch Logs stream, latest by default;'
-  }],
+  flags: [
+    {
+      name: 'stream',
+      short: 's',
+      description: 'AWS CloudWatch Logs stream, latest by default;'
+    },
+    {
+      name: 'profile',
+      description: 'Uses a specific profile instead of the default one;'
+    }
+  ],
   fn: ({l}) => new Promise((resolve, reject) => {
     const {valkconfig} = getProjectInfo();
     getRequiredEnv(valkconfig)

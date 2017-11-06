@@ -4,16 +4,23 @@ const argv = require('simple-argv');
 const {getProjectInfo} = require('../utils');
 
 module.exports = {
-  description: 'Test locally your Valkyrie application;',
-  flags: [{
-    name: 'env',
-    short: 'e',
-    description: 'Set the environment;'
-  }, {
-    name: 'port',
-    short: 'p',
-    description: 'Set the local port, default to 8000;'
-  }],
+  description: 'Runs locally your Valkyrie application;',
+  flags: [
+    {
+      name: 'env',
+      short: 'e',
+      description: 'Set the environment;'
+    },
+    {
+      name: 'port',
+      short: 'p',
+      description: 'Set the local port, default to 8000;'
+    },
+    {
+      name: 'profile',
+      description: 'Uses a specific profile instead of the default one;'
+    }
+  ],
   fn: ({l}) => new Promise(() => {
     const {root, valkconfig} = getProjectInfo();
     const [fileName, handler] = valkconfig.Environments.staging.Lambda.Handler.split('.');

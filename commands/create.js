@@ -12,7 +12,13 @@ const {getAWSCredentials, listFiles, subPath, generateRetryFn, getEnvColor, getA
 const cwd = process.cwd();
 
 module.exports = {
-  description: 'Create a new Valkyrie application;',
+  description: 'Creates a new Valkyrie application;',
+  flags: [
+    {
+      name: 'profile',
+      description: 'Uses a specific profile instead of the default one;'
+    }
+  ],
   fn: ({l, commands}) => new Promise((resolve, reject) => {
     const vars = {};
     const valkconfig = {

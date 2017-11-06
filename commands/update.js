@@ -7,9 +7,12 @@ module.exports = {
   description: 'Updates you function code and/or configurations;',
   flags: [
     {
-      name: 'yes',
-      short: 'y',
-      description: 'Doesn\'t ask for confirm in production;'
+      name: 'code',
+      description: 'Updates just the code part;'
+    },
+    {
+      name: 'config',
+      description: 'Updates just the configuration;'
     },
     {
       name: 'staging',
@@ -20,12 +23,13 @@ module.exports = {
       description: 'Updates production Lambda;'
     },
     {
-      name: 'code',
-      description: 'Updates just the code part;'
+      name: 'yes',
+      short: 'y',
+      description: 'Doesn\'t ask for confirm in production;'
     },
     {
-      name: 'config',
-      description: 'Updates just the configuration;'
+      name: 'profile',
+      description: 'Uses a specific profile instead of the default one;'
     }
   ],
   fn: ({l}) => new Promise((resolve, reject) => {

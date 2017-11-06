@@ -3,7 +3,11 @@ const {getAWSCredentials, getProjectInfo, breakChain, generateRetryFn} = require
 const inquirer = require('inquirer');
 
 module.exports = {
-  description: 'Delete an existing Valkyrie application;',
+  description: 'Deletes an existing Valkyrie application;',
+  flags: [{
+    name: 'profile',
+    description: 'Uses a specific profile instead of the default one;'
+  }],
   fn: ({l}, valkconfig = null) => new Promise((resolve, reject) => {
     const programmaticDeletion = valkconfig !== null;
     if (!valkconfig) valkconfig = getProjectInfo().valkconfig;

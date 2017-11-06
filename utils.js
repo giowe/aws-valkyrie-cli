@@ -46,18 +46,35 @@ e.getProjectInfo = () => {
   throw new Error('not a Valkyrie project (or any of the parent directories): missing valkconfig.json');
 };
 
-e.getGlobalConfig = () => {
+e.getGlobalConfigPath = () => path.join(os.homedir(), '.valkconfig');
+
+e.getGlobalFullConfig = () => {
   try {
     return JSON.parse(fs.readFileSync(path.join(os.homedir(), '.valkconfig')));
-  } catch (ignore) {
-    return {};
+  } catch (err) {
+    return {
+      defaultProfile: '',
+      profiles: {}
+    };
   }
 };
 
-e.saveGlobalConfig = (config) => {
-  fs.writeFileSync(path.join(os.homedir(), '.valkconfig'), typeof config === 'string' ? config : JSON.stringify(config, null, 2));
+e.getGlobalConfig = (profile) => {
+  const fullConfig = e.getGlobalFullConfig();
+  return fullConfig.profiles[profile || fullConfig.defaultProfile] || {};
 };
 
+e.saveGlobalConfig = (config, profile) => {
+  let fullConfig;
+  if (!config.defaultProfile && !config.profiles) {
+    fullConfig = e.getGlobalFullConfig();
+    fullConfig.profiles[profile || fullConfig.defaultProfile] = config;
+  } else {
+    fullConfig = config;
+  }
+
+  fs.writeFileSync(path.join(os.homedir(), '.valkconfig'), JSON.stringify(fullConfig, null, 2));
+};
 
 e.getAWSCredentials = () => {
   const config = e.getGlobalConfig();
