@@ -1,3 +1,5 @@
+const {logger: l} = require('aws-valkyrie-utils');
+
 const AWS = require('aws-sdk');
 const {getAWSCredentials, getProjectInfo, breakChain, generateRetryFn} = require('../utils');
 const inquirer = require('inquirer');
@@ -9,7 +11,7 @@ module.exports = {
     name: 'profile',
     description: 'Uses a specific profile instead of the default one;'
   }],
-  fn: ({l}, valkconfig = null) => new Promise((resolve, reject) => {
+  fn: ({valkconfig = null}) => new Promise((resolve, reject) => {
     const programmaticDeletion = valkconfig !== null;
     if (!valkconfig) valkconfig = getProjectInfo().valkconfig;
 

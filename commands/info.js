@@ -1,3 +1,4 @@
+const {logger: l} = require('aws-valkyrie-utils');
 const {getProjectInfo, /*getAWSCredentials, getRequiredEnv,*/ getEnvColor, getApiUrl} = require('../utils');
 //const AWS = require('aws-sdk');
 //const argv = require('simple-argv');
@@ -9,7 +10,7 @@ module.exports = {
     short: 's',
     description: ''
   }],*/
-  fn: ({l}) => new Promise((resolve, reject) => {
+  fn: () => new Promise((resolve, reject) => {
     const {valkconfig} = getProjectInfo();
     //const awsCredentials = {credentials: getAWSCredentials()};
     const envNames = Object.keys(valkconfig.Environments);

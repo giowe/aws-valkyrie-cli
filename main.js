@@ -1,7 +1,7 @@
 const path = require('path');
 const requireDir = require('require-dir');
 const request = require('request');
-const l = require('./logger');
+const {logger: l} = require('aws-valkyrie-utils');
 const pkg = require('./package.json');
 const argv = require('simple-argv');
 
@@ -26,7 +26,7 @@ if ((argv.version || argv.v) && !argv._.length) {
   const commands = requireDir(path.join(__dirname, 'commands'));
   const command = commands[argv._[0]];
   const handleErrors = (...errors) => errors.forEach(l.error);
-  if (argv.help) commands['help'].fn({l, commands: command ? {[argv._[0]]: command} : commands}).catch(handleErrors);
-  else if (command) command.fn({l, commands}).catch(handleErrors);
+  if (argv.help) commands['help'].fn({commands: command ? {[argv._[0]]: command} : commands}).catch(handleErrors);
+  else if (command) command.fn({commands}).catch(handleErrors);
   else l.log(`command not found, run ${l.colors.cyan}valk help${l.colors.reset} to list all commands;`);
 }

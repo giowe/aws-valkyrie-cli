@@ -1,3 +1,4 @@
+const {logger: l} = require('aws-valkyrie-utils');
 const {getProjectInfo, getAWSCredentials, getRequiredEnv, getEnvColor} = require('../utils');
 const argv = require('simple-argv');
 const CwLogs = require('aws-cwlogs');
@@ -15,7 +16,7 @@ module.exports = {
       description: 'Uses a specific profile instead of the default one;'
     }
   ],
-  fn: ({l}) => new Promise((resolve, reject) => {
+  fn: () => new Promise((resolve, reject) => {
     const {valkconfig} = getProjectInfo();
     getRequiredEnv(valkconfig)
       .then(({env}) => {

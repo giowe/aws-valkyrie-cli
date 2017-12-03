@@ -1,10 +1,11 @@
+const {logger: l} = require('aws-valkyrie-utils');
 const fs = require('fs');
 const {getProjectInfo, createDistZip} = require('../utils');
 
 module.exports = {
   hidden: true,
   description: 'debug command;',
-  fn: ({l}) => new Promise((resolve, reject) => {
+  fn: () => new Promise((resolve, reject) => {
     const {root} = getProjectInfo();
 
     createDistZip(root)

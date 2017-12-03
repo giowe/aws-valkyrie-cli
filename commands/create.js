@@ -1,4 +1,5 @@
 const inquirer = require('inquirer');
+const {logger: l} = require('aws-valkyrie-utils');
 const AWS = require('aws-sdk');
 const del = require('del');
 const {promisify} = require('util');
@@ -19,7 +20,7 @@ module.exports = {
       description: 'Uses a specific profile instead of the default one;'
     }
   ],
-  fn: ({l, commands}) => new Promise((resolve, reject) => {
+  fn: ({commands}) => new Promise((resolve, reject) => {
     const vars = {};
     const valkconfig = {
       Project: {},
@@ -340,7 +341,7 @@ module.exports = {
         saveValkconfig();
         l.success(`valkconfig.json:\n${JSON.stringify(valkconfig, null, 2)}`);
         l.success(`Valkyrie ${vars.template.projectName} project successfully created; the application is available at the following link${vars.template.environments.length > 1 ? 's' : ''}:`);
-        Promise.all(vars.template.environments.map(env => l.log(`- ${l.leftPad(`${env.toLowerCase()}:`, 11)} ${l.colors[getEnvColor(env)]}${urlJoin(getApiUrl(valkconfig, env), vars.root)}${l.colors.reset}`, {prefix: false})));
+        Promise.all(vars.template.environments.map(env => l.log(`- ${env.toLowerCase()}: ${l.colors[getEnvColor(env)]}${urlJoin(getApiUrl(valkconfig, env), vars.root)}${l.colors.reset}`, {prefix: false})));
         resolve();
       })
       .catch(err => {
@@ -348,7 +349,7 @@ module.exports = {
         l.error(err);
         if (!argv['no-revert']) {
           l.log('reverting modifications...');
-          return commands.delete.fn({l, argv, commands}, valkconfig);
+          return commands.delete.fn({argv, commands}, valkconfig);
         }
       })
       .then(resolve)

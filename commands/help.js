@@ -1,6 +1,7 @@
+const {logger: l} = require('aws-valkyrie-utils');
 module.exports = {
   description: 'Shows all commands info;',
-  fn: ({l, commands}) => new Promise((resolve) => {
+  fn: ({commands}) => new Promise((resolve) => {
     l.log('Help:');
     l.log([
       ...Object.entries(commands).filter(([, {hidden}]) => !hidden).map(([command, {flags = [], description}]) => [

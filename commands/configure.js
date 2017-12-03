@@ -1,3 +1,4 @@
+const {logger: l} = require('aws-valkyrie-utils');
 const inquirer = require('inquirer');
 const fs = require('fs');
 const argv = require('simple-argv');
@@ -23,7 +24,7 @@ module.exports = {
       description: 'Deletes .valkconfig file from the home directory;'
     }
   ],
-  fn: ({l}) => new Promise((resolve, reject) => {
+  fn: () => new Promise((resolve, reject) => {
     if (argv.purge) {
       try {
         fs.unlinkSync(getGlobalConfigPath());
