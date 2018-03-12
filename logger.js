@@ -114,8 +114,6 @@ function stopSpinner() {
 module.exports = {
   prefix,
   frame,
-  repeat,
-  leftPad,
   log,
   fail,
   error,
