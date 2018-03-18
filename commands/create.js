@@ -33,8 +33,6 @@ module.exports = {
     const saveValkconfig = () => fs.writeFileSync(path.join(vars.projectFolder, 'valkconfig.json'), JSON.stringify(valkconfig, null, 2));
 
     //SCAFFOLDER SELECTION
-    //todo preinstall default code scaffolder
-    //todo let the user pick from a cf non default scaffolder
     exec('npm root -g')
       .then(({stdout}) => {
         vars.npmGlobalPath = stdout.replace('\n', '');
