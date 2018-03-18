@@ -78,6 +78,7 @@ module.exports = {
         vars.codeScaffolderPath = codeScaffolderPath;
         vars.cfScaffolderPath = cfScaffolderPath;
 
+        const notNullValidator = (val) => val === '' ? 'required field;' : true;
         const defaultInputs = [
           {type: 'input', name: 'projectName', message: 'project name:', default: argv._[1], validate: name => {
             const {validForNewPackages, warnings, errors} = validate(name);
@@ -89,7 +90,7 @@ module.exports = {
           }},
           {type: 'checkbox', name: 'environments', message: 'select which environment you want to generate:', choices: [{name: 'staging', checked: true}, {name: 'production', checked: true}], validate: (choices) => choices.length ? true : 'select at least one environment;'},
           {type: 'input', name: 'description', message: 'description:'},
-          {type: 'input', name: 'region', message: 'project region:'},
+          {type: 'input', name: 'region', message: 'project region:', validate: notNullValidator},
         ];
         const {inputs: codeScaffolderInputs, source, handler, root} = require(codeScaffolderPath);
         vars.codeScaffolderSourcePath = path.join(codeScaffolderPath, source);
@@ -122,7 +123,12 @@ module.exports = {
           if(Array.isArray(sources)) {
             sources.forEach(({inputs: templateInputs, choice}) => templateInputs.forEach(({type, name: inputName, message, choices, default: defaultValue}) => {
               inputs.push({
-                type, name: `${name}.inputs.${inputName}`, message, choices, default: defaultValue,
+                type,
+                name: `${name}.inputs.${inputName}`,
+                message,
+                choices,
+                default: defaultValue,
+                validate: typeof defaultValue !== 'undefined' ? notNullValidator : null,
                 when: answers => sources.length <= 1 || answers[name] && answers[name].source === choice
               });
             }));
