@@ -9,6 +9,7 @@ const path = require('path');
 const fs = require('fs');
 const argv = require('simple-argv');
 const urlJoin = require('url-join');
+const cfScaffolder = require('valkyrie-cftemplate-scaffolder-default');
 const {getAWSCredentials, listFiles, subPath, generateRetryFn, getEnvColor, getApiUrl, createDistZip} = require('../utils');
 const cwd = process.cwd();
 
@@ -27,35 +28,58 @@ module.exports = {
       Environments: {}
     };
     const awsCredentials = {credentials: getAWSCredentials(argv.profile)};
-    const notNullValidator = (val) => val === '' ? 'required field;' : true;
-    const templatesPrefix = 'valkyrie-scaffolder-';
+    const codeTemplatePrefix = 'valkyrie-scaffolder-';
+    const cfTemplatePrefix = 'valkyrie-cftemplate-scaffolder-';
     const saveValkconfig = () => fs.writeFileSync(path.join(vars.projectFolder, 'valkconfig.json'), JSON.stringify(valkconfig, null, 2));
 
     //SCAFFOLDER SELECTION
+    //todo preinstall default code scaffolder
+    //todo let the user pick from a cf non default scaffolder
     exec('npm root -g')
       .then(({stdout}) => {
         vars.npmGlobalPath = stdout.replace('\n', '');
-        vars.scaffolders = {};
-        const scaffoldersList = fs.readdirSync(vars.npmGlobalPath).reduce((acc, module)=> {
-          if (module.substr(0, templatesPrefix.length) === templatesPrefix) {
-            const templatePath = path.join(vars.npmGlobalPath, module);
-            const templateListName = `${module.substr(templatesPrefix.length, module.length)} (${require(path.join(templatePath, 'package.json')).version})`;
-            vars.scaffolders[templateListName] = {
-              name: module,
-              path: templatePath
-            };
-            acc.push(templateListName);
-          }
-          return acc;
-        }, []);
+        const scaffolders = vars.scaffolders = fs.readdirSync(vars.npmGlobalPath).reduce((acc, module)=> {
+          [[codeTemplatePrefix, 'code'], [cfTemplatePrefix, 'cf']].forEach(([prefix, type]) => {
+            if (prefix === module.substr(0, prefix.length)) {
+              const templatePath = path.join(vars.npmGlobalPath, module);
+              const templateListName = `${module.substr(prefix.length, module.length)} (${require(path.join(templatePath, 'package.json')).version})`;
+              acc[type][templateListName] = {
+                name: module,
+                path: templatePath
+              };
+            }
+          });
 
-        if (!scaffoldersList.length) throw new Error(`no Valkyrie scaffolders found! Install globally at least the default Valkyrie scaffolder running command: ${l.colors.cyan}npm i -g valkyrie-scaffolder-default${l.colors.reset}`);
-        return inquirer.prompt({type: 'list', name: 'scaffolder', message: 'select a template to scaffold your project:', choices: scaffoldersList});
+          return acc;
+        }, {
+          code: {
+            [`default (${require(`${codeTemplatePrefix}default/package.json`).version})`]: {
+              name: `${codeTemplatePrefix}default`,
+              path: `${codeTemplatePrefix}default`
+            }
+          },
+          cf: {
+            [`default (${require(`${cfTemplatePrefix}default/package.json`).version})`]: {
+              name: `${cfTemplatePrefix}default`,
+              path: `${cfTemplatePrefix}default`
+            }
+          }
+        });
+
+        return inquirer.prompt([
+          {type: 'list', name: 'codeScaffolder', message: 'select a code template to scaffold your project:', choices: Object.keys(scaffolders.code)},
+          {type: 'list', name: 'cfScaffolder', message: 'select a cloud front template to scaffold your project:', choices: Object.keys(scaffolders.cf)}
+        ]);
       })
 
       //TEMPLATE VARIABLES INPUT
-      .then(({scaffolder}) => {
-        vars.scaffolderPath = vars.scaffolders[scaffolder].path;
+      .then(({codeScaffolder, cfSfaccolder}) => {
+        const {path: codeScaffolderPath} = vars.scaffolders.code[codeScaffolder];
+        const {path: cfScaffolderPath} = vars.scaffolders.code[cfSfaccolder];
+
+        vars.codeScaffolderPath = codeScaffolderPath;
+        vars.cfScaffolderPath = cfScaffolderPath;
+
         const defaultInputs = [
           {type: 'input', name: 'projectName', message: 'project name:', default: argv._[1], validate: name => {
             const {validForNewPackages, warnings, errors} = validate(name);
@@ -66,20 +90,22 @@ module.exports = {
             return `${out.join(', ')};`;
           }},
           {type: 'checkbox', name: 'environments', message: 'select which environment you want to generate:', choices: [{name: 'staging', checked: true}, {name: 'production', checked: true}], validate: (choices) => choices.length ? true : 'select at least one environment;'},
-          {type: 'input', name: 'region', message: 'region name:', validate: notNullValidator, default: 'eu-west-1'},
           {type: 'input', name: 'description', message: 'description:'},
-          {type: 'input', name: 'memorySize', message: 'Lambda memory size:', validate: notNullValidator, default: '128'},
-          {type: 'input', name: 'timeout', message: 'Lambda timeout:', validate: notNullValidator, default: '3'},
-          {type: 'input', name: 'runtime', message: 'Lambda runtime:', validate: notNullValidator, default: 'nodejs6.10'}
+
+          //{type: 'input', name: 'region', message: 'region name:', validate: notNullValidator, default: 'eu-west-1'},
+          //{type: 'input', name: 'memorySize', message: 'Lambda memory size:', validate: notNullValidator, default: '128'},
+          //{type: 'input', name: 'timeout', message: 'Lambda timeout:', validate: notNullValidator, default: '3'},
+          //{type: 'input', name: 'runtime', message: 'Lambda runtime:', validate: notNullValidator, default: 'nodejs6.10'}
         ];
-        const {inputs: scaffolderInputs, source, handler, root} = require(vars.scaffolderPath);
-        vars.scaffolderSourcePath = path.join(vars.scaffolderPath, source);
+        const {inputs: codeScaffolderInputs, source, handler, root} = require(codeScaffolderPath);
+        vars.scaffolderSourcePath = path.join(codeScaffolderPath, source);
         vars.handler = handler;
         vars.root = root;
+
         const l = defaultInputs.length;
         return inquirer.prompt([
           ...defaultInputs,
-          ...scaffolderInputs.filter(({name}) => {
+          ...codeScaffolderInputs.filter(({name}) => {
             for (let i = 0; i < l; i++) if (defaultInputs[i].name === name) return false;
             return true;
           })
@@ -103,6 +129,38 @@ module.exports = {
         fs.mkdirSync(vars.projectFolder);
       })
 
+      .then(() => {
+        const {templates} = cfScaffolder;
+
+        cfScaffolder.map((name, required, message, sources) => {
+          const questions = [];
+          if(!required) {
+            questions.push({
+              type: 'confirm',
+              name: `${name}Confirm`,
+              message,
+              default: true //todo
+            });
+          }
+          if(Array.isArray(sources)) {
+            questions.push({
+              type: 'checkbox',
+              name: `${name}Source`,
+              choices: sources.map(s => s.message),
+              when: (answers) => {
+                return required || answers[`${name}Confirm`];
+              }
+            });
+          }
+        });
+
+        inquirer.prompt(templates.map(({name, required, message}) => ({
+          message: `${message}${required ? ' (required)' : ''}`, name,
+        })));
+      })
+      .then(() => {
+        throw new Error('pause');
+      })
       //ROLE CREATION
       .then(() => {
         vars.iam = new AWS.IAM(awsCredentials);

@@ -1,6 +1,6 @@
 {
   "name": "aws-valkyrie-cli",
-  "version": "0.12.4",
+  "version": "0.13.0",
   "description": "",
   "author": "Giovanni Bruno",
   "contributors": [
@@ -34,6 +34,8 @@
     "simple-argv": "^1.0.0",
     "url-join": "^2.0.2",
     "validate-npm-package-name": "^3.0.0",
+    "valkyrie-cftemplate-scaffolder-default": "^0.3.0",
+    "valkyrie-scaffolder-default": "^1.1.10",
     "zip-dir": "^1.0.2"
   },
   "devDependencies": {
