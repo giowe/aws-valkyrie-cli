@@ -1,6 +1,7 @@
 const inquirer = require('inquirer');
 const {logger: l} = require('aws-valkyrie-utils');
 const AWS = require('aws-sdk');
+const CloudFormation = new AWS.CloudFormation();
 const del = require('del');
 const {promisify} = require('util');
 const validate = require('validate-npm-package-name');
@@ -103,20 +104,20 @@ module.exports = {
           if(!required) {
             inputs.push({
               type: 'confirm',
-              name: `${name}.enabled`,
+              name: `parameters.${name}.enabled`,
               message,
               default: false,
-              when: answers => dependsOn ? answers[dependsOn] && answers[dependsOn].enabled : true
+              when: answers => dependsOn ? answers['parameters'][dependsOn] && answers['parameters'][dependsOn].enabled : true
             });
           }
 
           if(Array.isArray(sources) && sources.length > 1) {
             inputs.push({
               type: 'list',
-              name: `${name}.source`,
-              choices: sources.map(({choice}) => choice),
+              name: `parameters.${name}.source`,
+              choices: sources.map(({template, choice}) => ({ name: choice, value: template })),
               message: 'chose a template:',
-              when: answers => required || answers[name] && answers[name].enabled
+              when: answers => required || answers['parameters'][name] && answers['parameters'][name].enabled
             });
           }
 
@@ -124,12 +125,11 @@ module.exports = {
             sources.forEach(({inputs: templateInputs, choice}) => templateInputs.forEach(({type, name: inputName, message, choices, default: defaultValue}) => {
               inputs.push({
                 type,
-                name: `${name}.inputs.${inputName}`,
+                name: `parameters.${name}.inputs.${inputName}`,
                 message,
                 choices,
                 default: defaultValue,
-                validate: typeof defaultValue !== 'undefined' ? notNullValidator : null,
-                when: answers => sources.length <= 1 || answers[name] && answers[name].source === choice
+                when: answers => sources.length <= 1 || answers['parameters'][name] && answers['parameters'][name].source === choice
               });
             }));
           }
@@ -158,14 +158,10 @@ module.exports = {
         });
         vars.projectFolder = path.join(cwd, vars.template.projectName);
         vars.plural = answers.environments.length > 1;
-        valkconfig.Project.Region = answers.region;
         valkconfig.Environments = {};
-        console.log(answers);
+        valkconfig.Project.Parameters = answers.parameters;
+        valkconfig.Project.Region = answers.region;
         fs.mkdirSync(vars.projectFolder);
-      })
-
-      .then(() => {
-        throw new Error('pause');
       })
 
       //TEMPLATING AND SCAFFOLDING APPLICATION
@@ -184,7 +180,6 @@ module.exports = {
         );
       })
       .then(() => l.success(`project scaffolded in ${vars.projectFolder}`))
-
       //INSTALLING PACKAGES
       .then(() => {
         l.wait('installing npm packages');
@@ -194,7 +189,12 @@ module.exports = {
         l.success('project packages installed;');
         return del(path.join(vars.projectFolder, 'etc'), {force: true});
       })
-
+      .then(() => {
+        l.wait('Creating the infrastracture');
+        console.log(JSON.stringify(valkconfig));
+        return vars.cfScaffolder.create(CloudFormation, valkconfig);
+      })
+      .then(() => l.success('Infrastructure is up!'))
       .then(() => {
         saveValkconfig();
         l.success(`valkconfig.json:\n${JSON.stringify(valkconfig, null, 2)}`);
