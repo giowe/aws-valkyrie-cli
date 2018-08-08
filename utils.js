@@ -105,15 +105,20 @@ e.getRequiredEnv = (valkconfig) => new Promise(resolve => {
   const availableEnv = Object.keys(valkconfig.Environments);
   if (availableEnv.length === 0) throw new Error('no environment found in valkconfig.json');
   else if (availableEnv.length > 1) {
-    if (argv.staging) return resolve ({env: 'staging'});
-    else if (argv.production) return resolve({env: 'production'});
+    availableEnv.forEach(env => {
+      if (argv[env]) {
+        return resolve({env});
+      }
+    });
     return resolve(inquirer.prompt([
-      {type: 'list', name: 'env', message: 'select the environment:', choices: ['staging', 'production'], default: 0}
+      {type: 'list', name: 'env', message: 'select the environment:', choices: availableEnv, default: 0}
     ]));
   } else return resolve({env: availableEnv[0].toLowerCase()});
 });
 
-e.getEnvColor = (env) => env.toLowerCase() === 'staging' ? 'cyan' : 'magenta';
+e.getEnvColor = (valkconfig, env) => {
+  return valkconfig.Environments[env.toLowerCase()].EnvColor || 'magenta';
+}
 
 e.getApiUrl = (valkconfig, env) => `https://${valkconfig.Environments[env].Api.Id}.execute-api.${valkconfig.Project.Region}.amazonaws.com/${env.toLowerCase()}`;
 
@@ -176,3 +181,5 @@ e.lsDependencies = (projectFolder) => new Promise((resolve, reject) => {
     resolve(JSON.parse(out));
   });
 });
+
+e.notNullValidator = (val) => val === '' ? 'required field;' : true;

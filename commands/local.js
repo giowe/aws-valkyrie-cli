@@ -4,13 +4,19 @@ const path = require('path');
 const argv = require('simple-argv');
 const {getProjectInfo} = require('../utils');
 
+// TODO, to review
+let valkconfig;
+try {
+  valkconfig = getProjectInfo().valkconfig;
+} catch(e) {}
+
 module.exports = {
   description: 'Runs locally your Valkyrie application;',
   flags: [
     {
       name: 'env',
       short: 'e',
-      description: 'Set the environment;'
+      description: `Set the environment${valkconfig ? ` (default to ${valkconfig.LocalEnv})` : ''};`
     },
     {
       name: 'port',
@@ -24,7 +30,10 @@ module.exports = {
   ],
   fn: () => new Promise(() => {
     const {root, valkconfig} = getProjectInfo();
-    const [fileName, handler] = valkconfig.Environments.staging.Lambda.Handler.split('.');
+    if (!valkconfig.LocalEnv) {
+      throw new Error('missing LocalEnv key in valkconfig.json');
+    }
+    const [fileName, handler] = valkconfig.Environments[valkconfig.LocalEnv].Lambda.Handler.split('.');
     const lambdaFn = require(path.join(root, fileName));
     proxyLocal(argv.port || argv.p || 8000, lambdaFn, handler, {}, {log: l.log, error: l.error, success: l.success});
   })

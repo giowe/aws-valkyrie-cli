@@ -21,7 +21,7 @@ module.exports = {
     getRequiredEnv(valkconfig)
       .then(({env}) => {
         const logGroupName = `/aws/lambda/${valkconfig.Environments[env].Lambda.FunctionName}`;
-        l.log(`streaming from ${l.colors[getEnvColor(env)]}${logGroupName}${l.colors.reset}:\n`);
+        l.log(`streaming from ${l.colors[getEnvColor(valkconfig, env)]}${logGroupName}${l.colors.reset}:\n`);
 
         new CwLogs({
           region: valkconfig.Project.Region,

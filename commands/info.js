@@ -16,7 +16,7 @@ module.exports = {
     const envNames = Object.keys(valkconfig.Environments);
     //const envValues = Object.values(valkconfig.Environments);
     //const apigateway = new AWS.APIGateway(Object.assign({region: valkconfig.Project.Region}, awsCredentials));
-    envNames.forEach(env => l.log(`${env}:${l.colors[getEnvColor(env)]}`, getApiUrl(valkconfig, env)));
+    envNames.forEach(env => l.log(`${env}:${l.colors[getEnvColor(valkconfig, env)]}`, getApiUrl(valkconfig, env)));
     resolve();
     /*Promise.resolve()
       .then(() => Promise.all(envNames.map(env => apigateway.getDeployments({ restApiId: valkconfig.Environments[env].Api.Id }).promise())))

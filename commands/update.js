@@ -4,6 +4,12 @@ const argv = require('simple-argv');
 const {getProjectInfo, getAWSCredentials, getRequiredEnv, breakChain, getEnvColor, generateRetryFn, createDistZip} = require('../utils');
 const AWS = require('aws-sdk');
 
+// TODO, to review
+let valkconfig;
+try {
+  valkconfig = getProjectInfo().valkconfig;
+} catch(e) {}
+
 module.exports = {
   description: 'Updates you function code and/or configurations;',
   flags: [
@@ -15,18 +21,16 @@ module.exports = {
       name: 'config',
       description: 'Updates just the configuration;'
     },
-    {
-      name: 'staging',
-      description: 'Updates staging Lambda;'
-    },
-    {
-      name: 'production',
-      description: 'Updates production Lambda;'
-    },
+    ...(valkconfig ? Object.keys(getProjectInfo().valkconfig.Environments).map(env => {
+      return {
+        name: env,
+        description: `Updates ${env} Lambda;`
+      };
+    }) : []),
     {
       name: 'yes',
       short: 'y',
-      description: 'Doesn\'t ask for confirm in production;'
+      description: 'Doesn\'t ask for confirm;'
     },
     {
       name: 'profile',
@@ -38,7 +42,21 @@ module.exports = {
 
     const vars = {};
     Promise.resolve()
-      .then(() => getRequiredEnv(valkconfig))
+      .then(() => {
+        let selectedEnv;
+        if (Object.keys(valkconfig.Environments).some(env => {
+          if (argv[env]) {
+            selectedEnv = env;
+            return true
+          } else {
+            return false
+          }
+        })) {
+          return {env: selectedEnv};
+        } else {
+          return getRequiredEnv(valkconfig);
+        }
+      })
       .then(answers => Object.assign(vars, answers))
       .then(() => {
         if (!argv.code && !argv.config) {
@@ -49,8 +67,8 @@ module.exports = {
       })
       .then(answers => Object.assign(vars, answers))
       .then(() => {
-        if (vars.env === 'production' && !argv.y) return inquirer.prompt([{
-          type: 'confirm', name: 'confirm', message: `you are about to update Lambda ${vars.update.join(' and ')} in ${l.colors[getEnvColor('production')]}production${l.colors.reset}. Continue?`, default: false
+        if (valkconfig.Environments[vars.env].Confirm && !argv.y) return inquirer.prompt([{
+          type: 'confirm', name: 'confirm', message: `you are about to update Lambda ${vars.update.join(' and ')} in ${l.colors[getEnvColor(valkconfig, vars.env)]}${vars.env}${l.colors.reset}. Continue?`, default: false
         }]);
         return {confirm: true};
       })
@@ -58,7 +76,7 @@ module.exports = {
       .then(() => {
         const promises = [];
         const lambda = new AWS.Lambda(Object.assign({region: valkconfig.Project.Region}, {credentials: getAWSCredentials(argv.profile)}));
-        const envColor = vars.envColor = l.colors[getEnvColor(vars.env)];
+        const envColor = vars.envColor = l.colors[getEnvColor(valkconfig, vars.env)];
         const {env, update} = vars;
 
         l.wait(`updating ${envColor}${env}${l.colors.reset} Lambda ${update.join(' and ')}...`);
