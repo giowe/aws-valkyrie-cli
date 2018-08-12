@@ -42,7 +42,7 @@ module.exports = {
         vars.envName = envName;
         Object.assign(vars, {description, envName, memorySize, timeout, runtime, handler});
         valkconfig.Environments[envName] = { Iam: {}, Lambda: {}, Api: {}, EnvColor: envColor, Confirm: requiredConfirm};
-        vars[vars.envName] = {}
+        vars[vars.envName] = {};
         vars.iam = new AWS.IAM(awsCredentials);
         l.wait('creating role');
         return generateRetryFn(() => createEnvRole(vars.iam, pkg.name, envName))();
