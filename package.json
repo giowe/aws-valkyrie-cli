@@ -37,6 +37,7 @@
     "zip-dir": "^1.0.2"
   },
   "devDependencies": {
+    "babel-eslint": "^8.2.6",
     "eslint": "^4.10.0"
   },
   "bugs": {
