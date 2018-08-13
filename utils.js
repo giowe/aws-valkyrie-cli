@@ -145,11 +145,11 @@ e.createDistZip = (projectFolder) => new Promise((resolve, reject) => {
       const dependenciesLength = dependencies.length
       const valkignoreLength = valkignore.length
       return zipdir(projectFolder, {
-        filter: (p) => {
+        filter: p => {
           if (minimatch(p, path.join(projectFolder, "/node_modules/.bin"), minimatchOptions)) return false
 
           if (minimatch(p, "**/node_modules/**", minimatchOptions)) {
-            const modulePath = p.replace(path.join(projectFolder, "node_modules"), "")
+            const modulePath = p.replace(path.join(projectFolder, "node_modules", p), "")
             for (let i = 0; i < dependenciesLength; i++) {
               if (minimatch(modulePath, `/${dependencies[i]}/**`, minimatchOptions) || minimatch(modulePath, `/${dependencies[i]}`, minimatchOptions)) return true
             }
