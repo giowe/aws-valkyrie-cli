@@ -128,20 +128,22 @@ e.createDistZip = (projectFolder) => new Promise((resolve, reject) => {
     valkignore.push (...fs.readFileSync(path.join(projectFolder, ".valkignore")).toString().split("\n").filter(raw => raw))
   } catch(ignore) {}
 
-
-  const versionSeparator = "|||"
   e.lsDependencies(projectFolder)
     .then(({ dependencies }) => {
       const dig = (dep, modules = {}) => {
         Object.entries(dep).forEach(([name, { dependencies, version }]) => {
-          modules[`${name}${versionSeparator}${version}`] = true
+          if (!modules[name]) {
+            modules[name] = new Set()
+          }
+          modules[name].add(version)
           if (dependencies) dig(dependencies, modules)
         })
         return modules
       }
-      return Object.keys(dig(dependencies))
+      return dig(dependencies)
     })
-    .then(dependencies => {
+    .then(dependenciesObj => {
+      const dependencies = Object.keys(dependenciesObj)
       const minimatchOptions = { dot: true }
       const dependenciesLength = dependencies.length
       const valkignoreLength = valkignore.length
@@ -160,10 +162,11 @@ e.createDistZip = (projectFolder) => new Promise((resolve, reject) => {
                 organization = splittedDep[0]
                 curDep = splittedDep[1]
               }
-              const [name, version] = curDep.split(versionSeparator)
+              const name = curDep
+              const versions = dependenciesObj[name]
               try {
                 const { name: pkgName, version: pkgVersion } = require(path.join(projectFolder, "/node_modules/", modulePath, "package.json"))
-                if (pkgName === name && version !== pkgVersion) {
+                if (pkgName === name && !versions.has(pkgVersion)) {
                   return false
                 }
               } catch(_) {}
