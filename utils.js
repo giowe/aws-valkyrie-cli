@@ -129,18 +129,20 @@ e.createDistZip = (projectFolder) => new Promise((resolve, reject) => {
   } catch(ignore) {}
 
 
+  const versionSeparator = "|||"
   e.lsDependencies(projectFolder)
     .then(({ dependencies }) => {
       const dig = (dep, modules = {}) => {
-        Object.entries(dep).forEach(([name, details]) => {
-          modules[name] = true
-          if (details.dependencies) dig(details.dependencies, modules)
+        Object.entries(dep).forEach(([name, { dependencies, version }]) => {
+          modules[`${name}${versionSeparator}${version}`] = true
+          if (dependencies) dig(dependencies, modules)
         })
         return modules
       }
       return Object.keys(dig(dependencies))
     })
     .then(dependencies => {
+      console.log(dependencies)
       const minimatchOptions = { dot: true }
       const dependenciesLength = dependencies.length
       const valkignoreLength = valkignore.length
@@ -151,16 +153,31 @@ e.createDistZip = (projectFolder) => new Promise((resolve, reject) => {
           if (minimatch(p, "**/node_modules/**", minimatchOptions)) {
             const modulePath = p.replace(path.join(projectFolder, "node_modules"), "")
             for (let i = 0; i < dependenciesLength; i++) {
-              const dependency = dependencies[i]
-              const [dependencyOrganization] = dependency.split("/")
-              if (
-                minimatch(modulePath, `/${dependency}/**`, minimatchOptions) ||
-                minimatch(modulePath, `/${dependency}`, minimatchOptions) ||
-                minimatch(modulePath, `/${dependencyOrganization}/**`, minimatchOptions) ||
-                minimatch(modulePath, `/${dependencyOrganization}`, minimatchOptions)
-              ) {
-                return true
+              let curDep = dependencies[i]
+              let organization
+
+              const splittedDep = curDep.split("/")
+              if (splittedDep.length === 2) {
+                organization = splittedDep[0]
+                curDep = splittedDep[1]
               }
+              const [name, version] = curDep.split(versionSeparator)
+              try {
+                const { name: pkgName, version: pkgVersion } = require(path.join(projectFolder, "/node_modules/", modulePath, "package.json"))
+                if (pkgName === name && version !== pkgVersion) {
+                  return false
+                }
+              } catch(_) {}
+
+              if (
+                minimatch(modulePath, `/${name}/**`, minimatchOptions) ||
+                minimatch(modulePath, `/${name}`, minimatchOptions) ||
+                name && (
+                  minimatch(modulePath, `/${organization}`, minimatchOptions) ||
+                  minimatch(modulePath, `/${organization}/${name}`, minimatchOptions) ||
+                  minimatch(modulePath, `/${organization}/${name}/**`, minimatchOptions)
+                )
+              ) return true
             }
             return false
           }
