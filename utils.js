@@ -142,7 +142,6 @@ e.createDistZip = (projectFolder) => new Promise((resolve, reject) => {
       return Object.keys(dig(dependencies))
     })
     .then(dependencies => {
-      console.log(dependencies)
       const minimatchOptions = { dot: true }
       const dependenciesLength = dependencies.length
       const valkignoreLength = valkignore.length
