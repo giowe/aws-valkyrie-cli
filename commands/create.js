@@ -18,10 +18,9 @@ const {
   promiseWaterfall,
   getDefaultProfile
 } = require("../utils")
-const { templateQuestions: lambdaTemplateQuestions } = require("../lib/lambda.js")
 const cwd = process.cwd()
 const { selectScaffolder } = require("../lib/scaffolder.js")
-const { flags: { profile: profileFlag } } = require("../lib/const.js")
+const { flags: { profile: profileFlag }, lambdaTemplateQuestions } = require("../lib/const.js")
 const { create: createEnv } = require("../lib/environment.js")
 
 module.exports = {
