@@ -1,5 +1,5 @@
 const inquirer = require("inquirer")
-const { logger: l } = require("aws-valkyrie-utils")
+const l = require("../logger.js")
 const del = require("del")
 const { promisify } = require("util")
 const validate = require("validate-npm-package-name")

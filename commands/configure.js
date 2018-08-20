@@ -1,4 +1,4 @@
-const { logger: l } = require("aws-valkyrie-utils")
+const l = require("../logger.js")
 const inquirer = require("inquirer")
 const fs = require("fs")
 const argv = require("simple-argv")

@@ -1,4 +1,4 @@
-const { logger: l } = require("aws-valkyrie-utils")
+const l = require("../logger.js")
 const { getProjectInfo, breakChain, getDefaultProfile, promiseWaterfall } = require("../utils")
 const inquirer = require("inquirer")
 const argv = require("simple-argv")

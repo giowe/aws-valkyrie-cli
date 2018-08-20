@@ -1,4 +1,4 @@
-const { logger: l } = require("aws-valkyrie-utils")
+const l = require("../logger.js")
 module.exports = {
   description: "Shows all commands info;",
   fn: ({ commands }) => new Promise((resolve) => {

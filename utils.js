@@ -6,7 +6,7 @@ const argv = require("simple-argv")
 const inquirer = require("inquirer")
 const minimatch = require("minimatch")
 const del = require("del")
-const { logger: l } = require("aws-valkyrie-utils")
+const l = require("./logger.js")
 const { promisify } = require("util")
 const { spawn } = require("child_process")
 const zipdir = promisify(require("zip-dir"))
@@ -222,4 +222,13 @@ e.promiseWaterfall = callbacks => {
   return callbacks.reduce((acc, cb) => {
     return acc.then(cb)
   }, Promise.resolve())
+}
+
+const clients = {}
+e.getServiceInstance = service => (credentials, region) => {
+  if (clients[service]) {
+    return clients[service]
+  } else {
+    return clients[service] = new AWS[service]({ credentials, region })
+  }
 }

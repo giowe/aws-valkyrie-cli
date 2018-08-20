@@ -1,4 +1,4 @@
-const { logger: l } = require("aws-valkyrie-utils")
+const l = require("../logger.js")
 const fs = require("fs")
 const { getProjectInfo, createDistZip } = require("../utils")
 

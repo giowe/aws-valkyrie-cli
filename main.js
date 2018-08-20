@@ -1,7 +1,7 @@
 const path = require("path")
 const requireDir = require("require-dir")
 const request = require("request")
-const { logger: l } = require("aws-valkyrie-utils")
+const l = require("./logger.js")
 const pkg = require("./package.json")
 const argv = require("simple-argv")
 

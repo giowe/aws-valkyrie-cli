@@ -1,4 +1,4 @@
-const { logger: l } = require("aws-valkyrie-utils")
+const l = require("../logger.js")
 const { colors } = l
 const path = require("path")
 const fs = require("fs")
