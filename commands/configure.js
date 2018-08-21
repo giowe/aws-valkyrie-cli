@@ -3,7 +3,7 @@ const inquirer = require("inquirer")
 const fs = require("fs")
 const argv = require("simple-argv")
 const { saveGlobalConfig, getGlobalConfigPath, getGlobalFullConfig, obfuscate } = require("../utils.js")
-const { flags: { profile: profileFlag }} = require("../lib/const.js")
+const { flags: { profile: profileFlag } } = require("../lib/const.js")
 
 /** Removes the ~/.valconfig file */
 const purge = () => {
@@ -85,10 +85,10 @@ module.exports = {
     }
 
     return inquirer.prompt([
-      {type: "input", name: "accessKeyId", message: `AWS Access Key ID [${obfuscate(config.accessKeyId)}]:`},
-      {type: "input", name: "secretAccessKey", message: `AWS Secret Access Key [${obfuscate(config.secretAccessKey)}]:`}
+      { type: "input", name: "accessKeyId", message: `AWS Access Key ID [${obfuscate(config.accessKeyId)}]:` },
+      { type: "input", name: "secretAccessKey", message: `AWS Secret Access Key [${obfuscate(config.secretAccessKey)}]:` }
     ])
-      .then(({accessKeyId, secretAccessKey}) => {
+      .then(({ accessKeyId, secretAccessKey }) => {
         if (accessKeyId) config.accessKeyId = accessKeyId
         if (secretAccessKey) config.secretAccessKey = secretAccessKey
 

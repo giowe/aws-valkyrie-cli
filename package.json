@@ -25,19 +25,18 @@
     "compare-versions": "^3.1.0",
     "deep-assign": "^2.0.0",
     "del": "^3.0.0",
-    "gulp": "^3.9.1",
-    "inquirer": "^3.3.0",
+    "inquirer": "^6.1.0",
     "minimatch": "^3.0.4",
-    "request": "^2.83.0",
-    "require-dir": "^0.3.2",
+    "request": "^2.88.0",
+    "require-dir": "^1.0.0",
     "simple-argv": "^1.0.0",
-    "url-join": "^2.0.2",
+    "url-join": "^4.0.0",
     "validate-npm-package-name": "^3.0.0",
     "zip-dir": "^1.0.2"
   },
   "devDependencies": {
     "babel-eslint": "^8.2.6",
-    "eslint": "^4.10.0"
+    "eslint": "^5.3.0"
   },
   "bugs": {
     "url": "https://github.com/giowe/aws-valkyrie-cli/issues"
