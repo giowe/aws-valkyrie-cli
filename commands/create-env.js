@@ -1,4 +1,4 @@
-const { logger: l } = require("aws-valkyrie-utils")
+const l = require("../logger.js")
 const { colors } = l
 const path = require("path")
 const fs = require("fs")
@@ -8,7 +8,7 @@ const urlJoin = require("url-join")
 const cwd = process.cwd()
 const { getProjectInfo, getDefaultProfile, getEnvColor, getApiUrl } = require("../utils")
 const { create: createEnv } = require("../lib/environment.js")
-const { templateQuestions: lambdaTemplateQuestions } = require("../lib/lambda.js")
+const { lambdaTemplateQuestions } = require("../lib/const.js")
 
 const notNullValidator = (val) => val === "" ? "required field;" : true
 

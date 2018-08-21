@@ -1,4 +1,4 @@
-const { logger: l } = require("aws-valkyrie-utils")
+const l = require("../logger.js")
 const { getProjectInfo, getAWSCredentials, getRequiredEnv, getEnvColor } = require("../utils")
 const argv = require("simple-argv")
 const CwLogs = require("aws-cwlogs")

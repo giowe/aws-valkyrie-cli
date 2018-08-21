@@ -1,4 +1,4 @@
-const { logger: l } = require("aws-valkyrie-utils")
+const l = require("../logger.js")
 const proxyLocal = require("aws-apigateway-proxy-local")
 const path = require("path")
 const argv = require("simple-argv")
