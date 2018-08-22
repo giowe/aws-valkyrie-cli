@@ -35,6 +35,7 @@
     "zip-dir": "^1.0.2"
   },
   "devDependencies": {
+    "@soluzioni-futura/eslint-config-soluzioni-futura": "^1.0.1",
     "babel-eslint": "^8.2.6",
     "eslint": "^5.4.0"
   },
