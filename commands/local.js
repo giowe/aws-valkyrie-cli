@@ -1,6 +1,6 @@
 const l = require("../logger.js")
 const proxyLocal = require("aws-apigateway-proxy-local")
-const path = require("path")
+const { join } = require("path")
 const argv = require("simple-argv")
 const { getProjectInfo } = require("../utils")
 
@@ -34,7 +34,12 @@ module.exports = {
       throw new Error("missing LocalEnv key in valkconfig.json")
     }
     const [fileName, handler] = valkconfig.Environments[valkconfig.LocalEnv].Lambda.Handler.split(".")
-    const lambdaFn = require(path.join(root, fileName))
-    proxyLocal(argv.port || argv.p || 8000, lambdaFn, handler, {}, { log: l.log, error: l.error, success: l.success })
+
+    const port = argv.port || argv.p || 8000
+    proxyLocal(require(join(root, fileName))[handler], {
+      port,
+      logger: { log: l.log, error: l.error, success: l.success },
+      listeningMessage: `Valkyrie local listening on port ${port}`
+    })
   })
 }

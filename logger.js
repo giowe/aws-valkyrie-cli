@@ -69,11 +69,11 @@ e.fail = (...args) => {
 }
 
 e.error = (err) => {
-  e.log(`[${colors.red}ERROR${colors.reset}]`,  err === "string" ? err : argv.verbose ? `\n${err.stack}` : err.message)
+  e.log(`[${colors.red}ERROR${colors.reset}]`,  err === "string" ? err : (argv.verbose || argv.debug) ? `\n${err.stack}` : err.message)
 }
 
 e.warning = (err) => {
-  e.log(`[${colors.yellow}WARNING${colors.reset}]`, typeof err === "string" ? err : argv.verbose ? `\n${err.stack}` : err.message)
+  e.log(`[${colors.yellow}WARNING${colors.reset}]`, typeof err === "string" ? err : (argv.verbose || argv.debug) ? `\n${err.stack}` : err.message)
 }
 
 e.success = (...args) => {
