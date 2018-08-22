@@ -32,8 +32,7 @@ module.exports = {
     const state = {}
     const valkconfig = {
       Project: {},
-      Environments: {},
-      LocalEnv: ""
+      Environments: {}
     }
 
     return selectScaffolder()
@@ -81,9 +80,6 @@ module.exports = {
         })
         valkconfig.Project.Region = region
         environments.forEach(env => {
-          if (env === "staging") {
-            valkconfig.LocalEnv = "staging"
-          }
           valkconfig.Environments[env] = {
             Iam: {},
             Api: {},
@@ -93,9 +89,6 @@ module.exports = {
           }
           state[env] = {}
         })
-        if (!valkconfig.LocalEnv) {
-          valkconfig.LocalEnv = "production"
-        }
         fs.mkdirSync(state.projectFolder)
       })
       //TEMPLATING AND SCAFFOLDING APPLICATION

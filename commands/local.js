@@ -13,11 +13,12 @@ try {
 module.exports = {
   description: "Runs locally your Valkyrie application;",
   flags: [
-    {
-      name: "env",
-      short: "e",
-      description: `Set the environment${valkconfig ? ` (default to ${valkconfig.LocalEnv})` : ""};`
-    },
+    ...(valkconfig ? Object.keys(getProjectInfo().valkconfig.Environments).map(env => {
+      return {
+        name: env,
+        description: `Test ${env} lambda locally;`
+      }
+    }) : []),
     {
       name: "port",
       short: "p",
@@ -34,6 +35,9 @@ module.exports = {
       throw new Error("missing LocalEnv key in valkconfig.json")
     }
     const [fileName, handler] = valkconfig.Environments[valkconfig.LocalEnv].Lambda.Handler.split(".")
+
+    // this enables lambda env variables during local execution
+    Object.entries(valkconfig.Environments[valkconfig.LocalEnv].Lambda.Environment.Variables).forEach(([key, value]) => process.env[key] = value)
 
     const port = argv.port || argv.p || 8000
     proxyLocal(require(join(root, fileName))[handler], {
