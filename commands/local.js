@@ -32,9 +32,6 @@ module.exports = {
   ],
   fn: () => new Promise(() => {
     const { root, valkconfig } = getProjectInfo()
-    // if (!valkconfig.LocalEnv) {
-    //   throw new Error("missing LocalEnv key in valkconfig.json")
-    // }
     const state = {}
     return Promise.resolve()
       .then(() => {

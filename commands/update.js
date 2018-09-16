@@ -4,7 +4,6 @@ const argv = require("simple-argv")
 const { getProjectInfo, getAWSCredentials, getRequiredEnv, breakChain, getEnvColor, generateRetryFn, createDistZip } = require("../utils")
 const AWS = require("aws-sdk")
 
-// TODO, to review
 let valkconfig
 try {
   valkconfig = getProjectInfo().valkconfig
@@ -21,7 +20,7 @@ module.exports = {
       name: "config",
       description: "Updates just the configuration;"
     },
-    ...(valkconfig ? Object.keys(getProjectInfo().valkconfig.Environments).map(env => {
+    ...(valkconfig ? Object.keys(valkconfig.Environments).map(env => {
       return {
         name: env,
         description: `Updates ${env} Lambda;`
@@ -81,12 +80,7 @@ module.exports = {
 
         l.wait(`updating ${envColor}${env}${l.colors.reset} Lambda ${update.join(" and ")}...`)
         if (update.includes("code")) promises.push(new Promise((resolve, reject) => {
-          //require('util').promisify(require('zip-dir'))(root)
           createDistZip(root)
-            // .then(data => {
-            //   const fs = require("fs")
-            //   fs.writeFileSync("./dist.zip", data)
-            // })
             .then(ZipFile => generateRetryFn(() => lambda.updateFunctionCode({ FunctionName: valkconfig.Environments[env].Lambda.FunctionName, ZipFile }).promise())())
             .then(resolve)
             .catch(reject)
