@@ -29,6 +29,7 @@ module.exports = {
       { type: "input", name: "name", message: "name:" },
       ...lambdaTemplateQuestions,
       { type: "input", name: "handler", message: "Lambda handler:", validate: notNullValidator, default: "index.handler" },
+      { type: "confirm", name: "kms", message: "KMS encryption:", validate: notNullValidator, default: false },
       { type: "list", name: "envColor", message: "color:", choices: Object.keys(colors).filter(color => color !== "bg" && color !== "reset").map(color => ({ name: `${colors[color]}${color}${colors.reset}`, value: color })) },
       { type: "confirm", name: "requiredConfirm", message: "require confirmation on update:" }
     ])
