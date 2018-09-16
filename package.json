@@ -1,10 +1,11 @@
 {
   "name": "aws-valkyrie-cli",
-  "version": "0.13.0",
+  "version": "0.14.0",
   "description": "",
   "author": "Giovanni Bruno",
   "contributors": [
-    "Giovanni Bruno <giovanni.bruno@soluzionifutura.it>"
+    "Giovanni Bruno <giovanni.bruno@soluzionifutura.it>",
+    "Nicolò Fuccella <nico@soluzionifutura.it>"
   ],
   "bin": {
     "valk": "./bin/valk"
