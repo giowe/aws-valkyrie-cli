@@ -54,16 +54,16 @@ const showVariable = (name, env) => {
   const { KMS } = valkconfig.Environments[env]
   if (KMS && KMS.EncryptedVariables && KMS.EncryptedVariables.includes(name)) {
     return decryptVariable(value)
-      .then(decryptedValue => [name, `${decryptedValue} (${l.colors.green}decrypted${l.colors.reset})`, "    🔒    "])
+      .then(decryptedValue => [name, `${decryptedValue.length > 25 ? `${decryptedValue.slice(0, 25)}...` : decryptedValue} (${l.colors.green}decrypted${l.colors.reset})`, "    🔒    "])
       .catch(err => {
         if (err.code === "AccessDeniedException") {
-          return [name, `${value.slice(0, 20)}... (${l.colors.red}encrypted${l.colors.reset})`, "    🔒    "]
+          return [name, `${value.slice(0, 25)}... (${l.colors.red}encrypted${l.colors.reset})`, "    🔒    "]
         } else {
           throw err
         }
       })
   } else {
-    return Promise.resolve([name, value, ""])
+    return Promise.resolve([name, value.length > 25 ? `${value.slice(0, 25)}...` : value, ""])
   }
 }
 
